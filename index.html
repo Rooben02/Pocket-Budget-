@@ -62,6 +62,83 @@
     .ripple-btn:active {
       transform: scale(0.97);
     }
+    /* Dark Mode Overrides */
+    body.dark {
+      background-color: #020617;
+      color: #f1f5f9;
+    }
+    body.dark .app-shell {
+      background-color: #0f172a;
+      border-color: #1e293b;
+    }
+    body.dark header,
+    body.dark nav {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: #1e293b !important;
+    }
+    body.dark .bg-white {
+      background-color: #1e293b !important;
+      color: #f1f5f9;
+    }
+    body.dark .bg-slate-50,
+    body.dark .bg-slate-50\/70,
+    body.dark .bg-slate-100 {
+      background-color: #0f172a !important;
+    }
+    body.dark .border-slate-200,
+    body.dark .border-slate-200\/80,
+    body.dark .border-slate-200\/70,
+    body.dark .border-slate-300,
+    body.dark .border-slate-100 {
+      border-color: #334155 !important;
+    }
+    body.dark .text-slate-900,
+    body.dark .text-slate-800,
+    body.dark .text-slate-700 {
+      color: #f1f5f9 !important;
+    }
+    body.dark .text-slate-600,
+    body.dark .text-slate-500 {
+      color: #94a3b8 !important;
+    }
+    body.dark input,
+    body.dark select,
+    body.dark textarea {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    body.dark .bg-emerald-50 {
+      background-color: rgba(16, 185, 129, 0.14) !important;
+    }
+    body.dark .bg-emerald-50\/60,
+    body.dark .bg-emerald-50\/70 {
+      background-color: rgba(16, 185, 129, 0.12) !important;
+    }
+    body.dark .text-emerald-950,
+    body.dark .text-emerald-900,
+    body.dark .text-emerald-800 {
+      color: #a7f3d0 !important;
+    }
+    body.dark .bg-amber-50,
+    body.dark .bg-amber-50\/60 {
+      background-color: rgba(245, 158, 11, 0.14) !important;
+    }
+    body.dark .bg-sky-50\/70 {
+      background-color: rgba(14, 165, 233, 0.14) !important;
+    }
+    /* Clean Print / PDF Monthly Statement */
+    @media print {
+      header button, nav, #openAddModalBtn, #sampleBanner, #copySalaryBar, #recurringBar, #rolloverBtn, #lockScreen {
+        display: none !important;
+      }
+      body, .app-shell {
+        background: #ffffff !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        padding-bottom: 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -82,6 +159,9 @@
           <button id="quickSaveBtn" title="Save all data & download backup" class="ripple-btn flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm" aria-label="Save Data">
             <i data-lucide="save" class="w-3.5 h-3.5"></i>
             <span id="quickSaveLabel">Save</span>
+          </button>
+          <button id="themeToggleBtn" title="Toggle Dark Mode" class="ripple-btn p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" aria-label="Toggle Dark Mode">
+            <i data-lucide="moon" class="w-4 h-4"></i>
           </button>
           <button id="lockAppBtn" title="Lock App" class="ripple-btn p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" aria-label="Lock App">
             <i data-lucide="lock" class="w-4 h-4"></i>
@@ -126,10 +206,15 @@
         <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white p-5 shadow-md">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
-                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-                Grand Total Balance
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                  <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                  Grand Total Balance
+                </span>
+                <button id="privacyToggleBtn" title="Hide or show amounts" class="ripple-btn p-1 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-200" aria-label="Toggle privacy mode">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
               <div id="grandTotalValue" class="text-3xl font-extrabold tracking-tight mt-1">₹0</div>
               <p class="text-[11px] text-slate-300 mt-0.5">Prev. Balance + This Month Net</p>
             </div>
@@ -180,6 +265,17 @@
           </button>
         </div>
 
+        <!-- 1-Tap Recurring Entries Banner -->
+        <div id="recurringBar" class="hidden bg-sky-50 border border-sky-200 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <i data-lucide="calendar-sync" class="w-4 h-4 text-sky-700 shrink-0"></i>
+            <span id="recurringBarText" class="text-xs font-medium text-sky-900 truncate">Recurring items ready to add.</span>
+          </div>
+          <button id="applyRecurringBtn" class="ripple-btn shrink-0 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl">
+            Add All
+          </button>
+        </div>
+
         <!-- Income Allocation Progress Bar -->
         <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
           <div class="flex items-center justify-between text-xs mb-1.5">
@@ -207,13 +303,18 @@
           </div>
         </div>
 
-        <!-- 4 Category Cards (2x2 Grid) -->
+        <!-- Monthly Categories (Card / Compact View Toggle) -->
         <div>
           <div class="flex items-center justify-between mb-2.5">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Categories</h2>
-            <span class="text-[11px] text-slate-400">Tap a card to add</span>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-slate-400">Tap to add</span>
+              <button id="viewModeToggleBtn" title="Switch Card / Compact View" class="ripple-btn p-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700" aria-label="Toggle compact view">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
           </div>
-          <div class="grid grid-cols-2 gap-3">
+          <div id="categoryCardsGrid" class="grid grid-cols-2 gap-3">
             <!-- Salary -->
             <button data-quick-cat="salary" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-emerald-300 transition">
               <div class="flex items-center justify-between">
@@ -251,6 +352,10 @@
               <div class="mt-3 text-xs font-semibold text-slate-500">Expenses</div>
               <div id="catTotal-expenses" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
               <div id="catCount-expenses" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+              <div id="catLimitWrap-expenses" class="hidden mt-2 space-y-1">
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="catLimitBar-expenses" class="h-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+                <div id="catLimitText-expenses" class="text-[10px] font-semibold text-slate-500"></div>
+              </div>
             </button>
 
             <!-- Credit Card -->
@@ -264,6 +369,10 @@
               <div class="mt-3 text-xs font-semibold text-slate-500">Credit Card</div>
               <div id="catTotal-creditcard" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
               <div id="catCount-creditcard" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+              <div id="catLimitWrap-creditcard" class="hidden mt-2 space-y-1">
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="catLimitBar-creditcard" class="h-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+                <div id="catLimitText-creditcard" class="text-[10px] font-semibold text-slate-500"></div>
+              </div>
             </button>
 
             <!-- Miscellaneous -->
@@ -277,6 +386,10 @@
               <div class="mt-3 text-xs font-semibold text-slate-500">Miscellaneous</div>
               <div id="catTotal-misc" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
               <div id="catCount-misc" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+              <div id="catLimitWrap-misc" class="hidden mt-2 space-y-1">
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="catLimitBar-misc" class="h-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+                <div id="catLimitText-misc" class="text-[10px] font-semibold text-slate-500"></div>
+              </div>
             </button>
 
             <!-- Gifts -->
@@ -290,6 +403,10 @@
               <div class="mt-3 text-xs font-semibold text-slate-500">Gifts</div>
               <div id="catTotal-gifts" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
               <div id="catCount-gifts" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+              <div id="catLimitWrap-gifts" class="hidden mt-2 space-y-1">
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="catLimitBar-gifts" class="h-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+                <div id="catLimitText-gifts" class="text-[10px] font-semibold text-slate-500"></div>
+              </div>
             </button>
 
             <!-- Savings -->
@@ -316,6 +433,23 @@
               <div class="mt-3 text-xs font-semibold text-slate-500">Investments</div>
               <div id="catTotal-investments" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
               <div id="catCount-investments" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+          </div>
+
+          <!-- Compact Single-Row List View -->
+          <div id="categoryCompactList" class="hidden bg-white rounded-3xl border border-slate-200/80 shadow-sm divide-y divide-slate-100 overflow-hidden"></div>
+
+          <!-- Credit Card Unbilled vs Paid Tracker -->
+          <div id="ccStatusCard" class="hidden mt-3 bg-indigo-50/70 border border-indigo-200 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <i data-lucide="credit-card" class="w-4 h-4 text-indigo-700 shrink-0"></i>
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-indigo-950 truncate">Credit Card Cycle Status</div>
+                <div id="ccStatusText" class="text-[11px] text-indigo-700 truncate">Unbilled: ₹0</div>
+              </div>
+            </div>
+            <button id="toggleCcPaidBtn" class="ripple-btn shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white">
+              Mark Paid
             </button>
           </div>
         </div>
@@ -500,6 +634,55 @@
           </div>
         </div>
 
+        <!-- Yearly Summary & Printable Monthly Statement -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Annual Overview</span>
+              <h2 id="yearlySummaryTitle" class="text-sm font-extrabold text-slate-900">2026 Yearly Summary</h2>
+            </div>
+            <button id="printReportBtn" class="ripple-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+              <span>PDF / Print</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 rounded-2xl p-2.5">
+              <div class="text-[10px] text-slate-400 font-semibold">Yearly Income</div>
+              <div id="yearIncomeVal" class="text-sm font-extrabold text-emerald-700 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5">
+              <div class="text-[10px] text-slate-400 font-semibold">Yearly Outflows</div>
+              <div id="yearOutflowVal" class="text-sm font-extrabold text-rose-600 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5">
+              <div class="text-[10px] text-slate-400 font-semibold">Yearly Saved + Invested</div>
+              <div id="yearWealthVal" class="text-sm font-extrabold text-blue-700 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5">
+              <div class="text-[10px] text-slate-400 font-semibold">Highest Spend Month</div>
+              <div id="yearPeakMonthVal" class="text-xs font-bold text-slate-800 mt-1 truncate">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Savings & Investment Goals Tracker -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Wealth Targets</span>
+              <h2 class="text-sm font-extrabold text-slate-900">Savings & Investment Goals</h2>
+            </div>
+            <i data-lucide="target" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div id="goalsList" class="space-y-2.5"></div>
+          <form id="addGoalForm" class="pt-2 border-t border-slate-100 flex items-center gap-2">
+            <input id="newGoalTitle" type="text" maxlength="32" placeholder="Goal (e.g., Emergency Fund)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="newGoalTarget" type="number" min="1" step="any" placeholder="Target" class="w-24 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button type="submit" class="ripple-btn shrink-0 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Add</button>
+          </form>
+        </div>
+
         <div id="monthsLedgerList" class="space-y-2.5"></div>
       </section>
 
@@ -559,6 +742,31 @@
                 <option value="misc">Miscellaneous</option>
               </select>
               <button type="submit" class="ripple-btn shrink-0 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Add Item</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Splits & IOUs (Owed to Me / I Owe) -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Splits & IOUs</h2>
+              <p class="text-[11px] text-slate-400">Track money owed to you or by you</p>
+            </div>
+            <span id="iouNetBadge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">₹0 net</span>
+          </div>
+          <div id="iouList" class="space-y-2"></div>
+          <form id="addIouForm" class="pt-2 border-t border-slate-100 space-y-2">
+            <div class="flex items-center gap-2">
+              <input id="newIouPerson" type="text" maxlength="32" placeholder="Person / Split note" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input id="newIouAmount" type="number" min="1" step="any" placeholder="Amt" class="w-20 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="newIouType" aria-label="IOU Type" class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="owed_to_me">Owed to Me (+ Credit on settle)</option>
+                <option value="i_owe">I Owe (- Expense on settle)</option>
+              </select>
+              <button type="submit" class="ripple-btn shrink-0 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Add</button>
             </div>
           </form>
         </div>
@@ -697,6 +905,11 @@
           <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Salary, Rent, SIP, Nifty 50, FD" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
 
+        <label for="entryRecurring" class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer select-none px-1">
+          <input id="entryRecurring" type="checkbox" class="accent-emerald-600 w-4 h-4 rounded" />
+          <span>Repeat every month (1-tap recurring entry)</span>
+        </label>
+
         <div class="pt-1 flex gap-2">
           <button type="button" id="cancelModalBtn" class="ripple-btn flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Cancel</button>
           <button type="submit" class="ripple-btn flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-sm">Save Entry</button>
@@ -735,6 +948,33 @@
           <option value="EUR">€ EUR (Euro)</option>
           <option value="GBP">£ GBP (Pound)</option>
         </select>
+      </div>
+
+      <!-- Monthly Category Limits -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <i data-lucide="gauge" class="w-4 h-4 text-emerald-600"></i>
+          Monthly Spending Caps (Optional)
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label for="limit-expenses" class="block text-[10px] font-semibold text-slate-500 mb-0.5">Expenses Cap</label>
+            <input id="limit-expenses" type="number" min="0" step="any" placeholder="No cap" class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900" />
+          </div>
+          <div>
+            <label for="limit-creditcard" class="block text-[10px] font-semibold text-slate-500 mb-0.5">Credit Card Cap</label>
+            <input id="limit-creditcard" type="number" min="0" step="any" placeholder="No cap" class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900" />
+          </div>
+          <div>
+            <label for="limit-gifts" class="block text-[10px] font-semibold text-slate-500 mb-0.5">Gifts Cap</label>
+            <input id="limit-gifts" type="number" min="0" step="any" placeholder="No cap" class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900" />
+          </div>
+          <div>
+            <label for="limit-misc" class="block text-[10px] font-semibold text-slate-500 mb-0.5">Misc Cap</label>
+            <input id="limit-misc" type="number" min="0" step="any" placeholder="No cap" class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900" />
+          </div>
+        </div>
+        <button type="button" id="saveLimitsBtn" class="ripple-btn w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Save Spending Caps</button>
       </div>
 
       <!-- Passcode Management -->
@@ -898,6 +1138,13 @@
         checklistDone: parsed.checklistDone && typeof parsed.checklistDone === 'object'
           ? parsed.checklistDone
           : {},
+        darkMode: Boolean(parsed.darkMode),
+        privacyMode: Boolean(parsed.privacyMode),
+        compactView: Boolean(parsed.compactView),
+        categoryLimits: parsed.categoryLimits && typeof parsed.categoryLimits === 'object' ? parsed.categoryLimits : {},
+        ccPaidMonths: parsed.ccPaidMonths && typeof parsed.ccPaidMonths === 'object' ? parsed.ccPaidMonths : {},
+        goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+        ious: Array.isArray(parsed.ious) ? parsed.ious : [],
         entries: parsed.entries
       };
     }
@@ -915,7 +1162,7 @@
       if (window.__EMBEDDED_BUDGET_STATE__ && Array.isArray(window.__EMBEDDED_BUDGET_STATE__.entries)) {
         return normalizeState(window.__EMBEDDED_BUDGET_STATE__);
       }
-      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      return normalizeState(JSON.parse(JSON.stringify(DEFAULT_STATE)));
     }
 
     function saveState() {
@@ -928,6 +1175,7 @@
 
     function formatMoney(amount, withSign = false) {
       const cfg = CURRENCIES[state.currency] || CURRENCIES.INR;
+      if (state.privacyMode) return cfg.symbol + '•••••';
       const absVal = Math.abs(Number(amount) || 0);
       const formatted = absVal.toLocaleString(cfg.locale, { maximumFractionDigits: 2 });
       if (amount < 0) return '-' + cfg.symbol + formatted;
@@ -1200,6 +1448,13 @@
     }
 
     function render() {
+      document.body.classList.toggle('dark', Boolean(state.darkMode));
+      const themeBtn = document.getElementById('themeToggleBtn');
+      if (themeBtn) themeBtn.innerHTML = `<i data-lucide="${state.darkMode ? 'sun' : 'moon'}" class="w-4 h-4"></i>`;
+      const privBtn = document.getElementById('privacyToggleBtn');
+      if (privBtn) privBtn.innerHTML = `<i data-lucide="${state.privacyMode ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>`;
+      const viewBtn = document.getElementById('viewModeToggleBtn');
+      if (viewBtn) viewBtn.innerHTML = `<i data-lucide="${state.compactView ? 'layout-grid' : 'list'}" class="w-3.5 h-3.5"></i>`;
       document.getElementById('currencySelect').value = state.currency;
       document.getElementById('autoCarryToggle').checked = state.autoCarryover;
       document.getElementById('currentMonthLabel').textContent = formatMonthLabel(state.selectedMonth);
@@ -1267,11 +1522,91 @@
         document.getElementById('salaryLeftLabel').textContent = totalAllocated > 0 ? `${formatMoney(totalAllocated)} spent` : '';
       }
 
-      // Category Cards
-      for (const cat of ['salary', 'credited', 'expenses', 'creditcard', 'misc', 'gifts', 'savings', 'investments']) {
+      // 1-Tap Recurring Entries check
+      const recurringTemplates = [];
+      const seenRec = new Set();
+      for (const e of state.entries.slice().sort((a, b) => b.createdAt - a.createdAt)) {
+        if (e.recurring) {
+          const key = `${e.category}|${(e.note || '').toLowerCase()}|${e.amount}`;
+          if (!seenRec.has(key)) {
+            seenRec.add(key);
+            const alreadyInMonth = current.items.some(ci => ci.category === e.category && (ci.note || '').toLowerCase() === (e.note || '').toLowerCase() && Number(ci.amount) === Number(e.amount));
+            if (!alreadyInMonth) recurringTemplates.push(e);
+          }
+        }
+      }
+      const recBar = document.getElementById('recurringBar');
+      if (recurringTemplates.length > 0) {
+        recBar.classList.remove('hidden');
+        document.getElementById('recurringBarText').textContent = `${recurringTemplates.length} recurring ${recurringTemplates.length === 1 ? 'item' : 'items'} ready for ${formatShortMonth(state.selectedMonth)}`;
+      } else {
+        recBar.classList.add('hidden');
+      }
+
+      // Category Cards & Limits + Compact List View
+      const cats = ['salary', 'credited', 'expenses', 'creditcard', 'misc', 'gifts', 'savings', 'investments'];
+      const limits = state.categoryLimits || {};
+      for (const cat of cats) {
         document.getElementById(`catTotal-${cat}`).textContent = formatMoney(current.sums[cat]);
         const cnt = current.counts[cat];
         document.getElementById(`catCount-${cat}`).textContent = `${cnt} ${cnt === 1 ? 'entry' : 'entries'}`;
+        const wrap = document.getElementById(`catLimitWrap-${cat}`);
+        if (wrap) {
+          const cap = Number(limits[cat]) || 0;
+          if (cap > 0) {
+            const pct = Math.round((current.sums[cat] / cap) * 100);
+            const bar = document.getElementById(`catLimitBar-${cat}`);
+            const txt = document.getElementById(`catLimitText-${cat}`);
+            bar.style.width = `${Math.min(100, pct)}%`;
+            bar.className = `h-full transition-all ${pct >= 100 ? 'bg-rose-500' : (pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500')}`;
+            txt.textContent = pct >= 100 ? `${pct}% — Over ${formatMoney(cap)}` : `${pct}% of ${formatMoney(cap)}`;
+            txt.className = `text-[10px] font-semibold ${pct >= 100 ? 'text-rose-600' : (pct >= 80 ? 'text-amber-600' : 'text-slate-500')}`;
+            wrap.classList.remove('hidden');
+          } else {
+            wrap.classList.add('hidden');
+          }
+        }
+      }
+
+      document.getElementById('categoryCardsGrid').classList.toggle('hidden', Boolean(state.compactView));
+      const compactEl = document.getElementById('categoryCompactList');
+      compactEl.classList.toggle('hidden', !state.compactView);
+      if (state.compactView) {
+        compactEl.innerHTML = cats.map(cat => {
+          const meta = CATEGORY_META[cat];
+          const cnt = current.counts[cat];
+          const cap = Number(limits[cat]) || 0;
+          const capNote = cap > 0 ? ` · ${Math.round((current.sums[cat] / cap) * 100)}% of cap` : '';
+          return `
+            <button data-quick-cat="${cat}" class="ripple-btn w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-xl ${meta.badge} flex items-center justify-center shrink-0">
+                  <i data-lucide="${meta.icon}" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900 truncate">${meta.label}</div>
+                  <div class="text-[10px] text-slate-400">${cnt} ${cnt === 1 ? 'entry' : 'entries'}${capNote}</div>
+                </div>
+              </div>
+              <span class="text-sm font-extrabold text-slate-900 shrink-0">${formatMoney(current.sums[cat])}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      // Credit Card Unbilled vs Paid Strip
+      const ccCard = document.getElementById('ccStatusCard');
+      if (current.sums.creditcard > 0) {
+        const isPaid = Boolean((state.ccPaidMonths || {})[state.selectedMonth]);
+        ccCard.classList.remove('hidden');
+        document.getElementById('ccStatusText').textContent = isPaid
+          ? `Bill Cleared (${formatMoney(current.sums.creditcard)})`
+          : `Unbilled Spend: ${formatMoney(current.sums.creditcard)} due`;
+        const ccBtn = document.getElementById('toggleCcPaidBtn');
+        ccBtn.textContent = isPaid ? 'Paid ✓' : 'Mark Paid';
+        ccBtn.className = `ripple-btn shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-xl ${isPaid ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`;
+      } else {
+        ccCard.classList.add('hidden');
       }
 
       // Recent Entries (Overview)
@@ -1293,7 +1628,26 @@
       if (filtered.length === 0) {
         fullEl.innerHTML = `<div class="bg-white rounded-3xl p-8 text-center text-xs text-slate-400 border border-slate-200/80">No matching entries in ${formatMonthLabel(state.selectedMonth)}.</div>`;
       } else {
-        fullEl.innerHTML = filtered.map(item => renderEntryRow(item)).join('');
+        // Group entries by date with daily net subtotal headers
+        const groups = new Map();
+        for (const item of filtered) {
+          const key = item.date || item.month;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(item);
+        }
+        fullEl.innerHTML = Array.from(groups.entries()).map(([dKey, list]) => {
+          const dayNet = list.reduce((acc, it) => acc + ((CATEGORY_META[it.category] || CATEGORY_META.expenses).sign * (Number(it.amount) || 0)), 0);
+          const label = dKey.length === 10 ? formatDateBadge({ date: dKey }) : formatMonthLabel(dKey);
+          return `
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between px-1 pt-1">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">${label}</span>
+                <span class="text-[11px] font-bold ${dayNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(dayNet, true)}</span>
+              </div>
+              <div class="space-y-1.5">${list.map(item => renderEntryRow(item)).join('')}</div>
+            </div>
+          `;
+        }).join('');
       }
 
       // All Months Ledger (Tab 3)
@@ -1338,11 +1692,90 @@
         `;
       }).join('');
 
+      renderYearlySummary(months, ledger);
+      renderGoals();
+      renderIous();
       renderChecklist(current);
       renderInsights(current, ledger);
       renderChart(current);
       renderTrendChart(months, ledger);
       if (window.lucide) lucide.createIcons();
+    }
+
+    function renderYearlySummary(months, ledger) {
+      const year = state.selectedMonth.slice(0, 4);
+      document.getElementById('yearlySummaryTitle').textContent = `${year} Yearly Summary`;
+      const yMonths = months.filter(ym => ym.startsWith(year + '-'));
+      let yInc = 0, yOut = 0, yWealth = 0, peakVal = -1, peakYm = '';
+      for (const ym of yMonths) {
+        const m = ledger[ym];
+        const out = m.sums.expenses + m.sums.creditcard + m.sums.misc + m.sums.gifts;
+        yInc += m.totalInflow;
+        yOut += out;
+        yWealth += m.sums.savings + m.sums.investments;
+        if (out > peakVal && out > 0) { peakVal = out; peakYm = ym; }
+      }
+      document.getElementById('yearIncomeVal').textContent = formatMoney(yInc);
+      document.getElementById('yearOutflowVal').textContent = formatMoney(yOut);
+      document.getElementById('yearWealthVal').textContent = formatMoney(yWealth);
+      document.getElementById('yearPeakMonthVal').textContent = peakYm ? `${formatShortMonth(peakYm)} (${formatMoney(peakVal)})` : '—';
+    }
+
+    function renderGoals() {
+      const el = document.getElementById('goalsList');
+      const goals = state.goals || [];
+      if (goals.length === 0) {
+        el.innerHTML = `<div class="text-center py-4 text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">No savings/investment goals yet. Add a target below!</div>`;
+        return;
+      }
+      el.innerHTML = goals.map(g => {
+        const pct = g.target > 0 ? Math.min(100, Math.round((g.saved / g.target) * 100)) : 0;
+        return `
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-900 truncate">${escapeHtml(g.title)}</div>
+                <div class="text-[11px] text-slate-500">${formatMoney(g.saved)} / ${formatMoney(g.target)} (${pct}%)</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button data-topup-goal="${g.id}" class="ripple-btn px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold">+₹1k</button>
+                <button data-del-goal="${g.id}" class="p-1 rounded-lg hover:bg-rose-100 text-slate-400 hover:text-rose-600" aria-label="Delete goal"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 transition-all duration-300" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderIous() {
+      const el = document.getElementById('iouList');
+      const ious = state.ious || [];
+      const net = ious.reduce((acc, x) => acc + (x.type === 'owed_to_me' ? x.amount : -x.amount), 0);
+      const badge = document.getElementById('iouNetBadge');
+      badge.textContent = `${formatMoney(net, true)} net`;
+      badge.className = `text-[11px] font-bold px-2.5 py-1 rounded-full ${net >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+
+      if (ious.length === 0) {
+        el.innerHTML = `<div class="text-center py-4 text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">No pending splits or IOUs.</div>`;
+        return;
+      }
+      el.innerHTML = ious.map(x => `
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-slate-900 truncate">${escapeHtml(x.person)}</div>
+            <div class="text-[11px] font-semibold ${x.type === 'owed_to_me' ? 'text-teal-600' : 'text-rose-600'}">
+              ${x.type === 'owed_to_me' ? 'Owes you' : 'You owe'} · ${formatMoney(x.amount)}
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button data-settle-iou="${x.id}" class="ripple-btn px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Settled</button>
+            <button data-del-iou="${x.id}" class="p-1.5 rounded-xl hover:bg-rose-100 text-slate-400 hover:text-rose-600" aria-label="Delete IOU"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+      `).join('');
     }
 
     function isChecklistItemCleared(item, ym, monthEntries) {
@@ -1547,6 +1980,7 @@
         : (state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`);
       document.getElementById('entryDate').value = defaultDate;
       document.getElementById('entryNote').value = existingEntry ? (existingEntry.note || '') : '';
+      document.getElementById('entryRecurring').checked = Boolean(existingEntry && existingEntry.recurring);
       modal.classList.remove('hidden');
       setTimeout(() => document.getElementById('entryAmount').focus(), 50);
     }
@@ -1686,6 +2120,7 @@
       const dateVal = document.getElementById('entryDate').value;
       const month = dateVal ? dateVal.slice(0, 7) : state.selectedMonth;
       const note = document.getElementById('entryNote').value.trim();
+      const recurring = document.getElementById('entryRecurring').checked;
       const editId = document.getElementById('editEntryId').value;
 
       if (!dateVal || isNaN(amount) || amount <= 0) {
@@ -1696,7 +2131,7 @@
       if (editId) {
         const idx = state.entries.findIndex(item => item.id === editId);
         if (idx !== -1) {
-          state.entries[idx] = { ...state.entries[idx], category: modalCategory, amount, month, date: dateVal, note };
+          state.entries[idx] = { ...state.entries[idx], category: modalCategory, amount, month, date: dateVal, note, recurring };
         }
         showToast('Entry updated');
       } else {
@@ -1707,6 +2142,7 @@
           month,
           date: dateVal,
           note,
+          recurring,
           createdAt: Date.now()
         });
         state.isSample = false;
@@ -2392,6 +2828,180 @@
       document.getElementById('scanResultForm').classList.add('hidden');
       render();
       showToast(`Added ${formatMoney(amount)} to ${(CATEGORY_META[category] || CATEGORY_META.expenses).label}`);
+    });
+
+    // Dark Mode, Privacy Mode, Compact View & Feature Listeners
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      state.darkMode = !state.darkMode;
+      saveState();
+      render();
+    });
+
+    document.getElementById('privacyToggleBtn').addEventListener('click', () => {
+      state.privacyMode = !state.privacyMode;
+      saveState();
+      render();
+      showToast(state.privacyMode ? 'Amounts hidden' : 'Amounts visible');
+    });
+
+    document.getElementById('viewModeToggleBtn').addEventListener('click', () => {
+      state.compactView = !state.compactView;
+      saveState();
+      render();
+    });
+
+    document.getElementById('toggleCcPaidBtn').addEventListener('click', () => {
+      if (!state.ccPaidMonths) state.ccPaidMonths = {};
+      state.ccPaidMonths[state.selectedMonth] = !state.ccPaidMonths[state.selectedMonth];
+      saveState();
+      render();
+      showToast(state.ccPaidMonths[state.selectedMonth] ? 'Credit card bill marked paid' : 'Marked unbilled');
+    });
+
+    document.getElementById('applyRecurringBtn').addEventListener('click', () => {
+      const { ledger } = computeAllMonthsLedger();
+      const curItems = ledger[state.selectedMonth].items;
+      const seen = new Set();
+      let added = 0;
+      for (const e of state.entries.slice().sort((a, b) => b.createdAt - a.createdAt)) {
+        if (!e.recurring) continue;
+        const key = `${e.category}|${(e.note || '').toLowerCase()}|${e.amount}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const exists = curItems.some(ci => ci.category === e.category && (ci.note || '').toLowerCase() === (e.note || '').toLowerCase() && Number(ci.amount) === Number(e.amount));
+        if (!exists) {
+          state.entries.push({
+            id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            category: e.category,
+            amount: e.amount,
+            month: state.selectedMonth,
+            date: `${state.selectedMonth}-01`,
+            note: e.note,
+            recurring: true,
+            createdAt: Date.now() + added
+          });
+          added++;
+        }
+      }
+      if (added > 0) {
+        saveState();
+        render();
+        showToast(`Added ${added} recurring ${added === 1 ? 'item' : 'items'}`);
+      }
+    });
+
+    document.getElementById('printReportBtn').addEventListener('click', () => {
+      window.print();
+    });
+
+    document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+      if (!state.categoryLimits) state.categoryLimits = {};
+      for (const cid of ['expenses', 'creditcard', 'gifts', 'misc']) {
+        const val = parseFloat(document.getElementById(`limit-${cid}`).value);
+        state.categoryLimits[cid] = (!isNaN(val) && val > 0) ? val : 0;
+      }
+      saveState();
+      render();
+      showToast('Spending caps saved');
+    });
+
+    // Populate spending caps when Settings opens
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      const lim = state.categoryLimits || {};
+      for (const cid of ['expenses', 'creditcard', 'gifts', 'misc']) {
+        document.getElementById(`limit-${cid}`).value = lim[cid] > 0 ? lim[cid] : '';
+      }
+    });
+
+    document.getElementById('addGoalForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('newGoalTitle').value.trim();
+      const target = parseFloat(document.getElementById('newGoalTarget').value);
+      if (!title || isNaN(target) || target <= 0) {
+        showToast('Enter a goal name and target amount');
+        return;
+      }
+      if (!Array.isArray(state.goals)) state.goals = [];
+      state.goals.push({ id: 'g_' + Date.now(), title, target, saved: 0 });
+      document.getElementById('newGoalTitle').value = '';
+      document.getElementById('newGoalTarget').value = '';
+      saveState();
+      render();
+      showToast(`Goal "${title}" added`);
+    });
+
+    document.getElementById('addIouForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const person = document.getElementById('newIouPerson').value.trim();
+      const amount = parseFloat(document.getElementById('newIouAmount').value);
+      const type = document.getElementById('newIouType').value;
+      if (!person || isNaN(amount) || amount <= 0) {
+        showToast('Enter a name and valid amount');
+        return;
+      }
+      if (!Array.isArray(state.ious)) state.ious = [];
+      state.ious.push({ id: 'iou_' + Date.now(), person, amount, type });
+      document.getElementById('newIouPerson').value = '';
+      document.getElementById('newIouAmount').value = '';
+      saveState();
+      render();
+      showToast('Split / IOU added');
+    });
+
+    // Event delegation for Compact List quick-add, Goals, and IOUs
+    document.addEventListener('click', (e) => {
+      const compactCat = e.target.closest('#categoryCompactList [data-quick-cat]');
+      if (compactCat) {
+        openModal(compactCat.dataset.quickCat);
+        return;
+      }
+      const topupGoal = e.target.closest('[data-topup-goal]');
+      if (topupGoal) {
+        const g = (state.goals || []).find(x => x.id === topupGoal.dataset.topupGoal);
+        if (g) {
+          g.saved = (Number(g.saved) || 0) + 1000;
+          saveState();
+          render();
+          showToast(`Added +1,000 to ${g.title}`);
+        }
+        return;
+      }
+      const delGoal = e.target.closest('[data-del-goal]');
+      if (delGoal) {
+        state.goals = (state.goals || []).filter(x => x.id !== delGoal.dataset.delGoal);
+        saveState();
+        render();
+        showToast('Goal removed');
+        return;
+      }
+      const settleIou = e.target.closest('[data-settle-iou]');
+      if (settleIou) {
+        const iou = (state.ious || []).find(x => x.id === settleIou.dataset.settleIou);
+        if (iou) {
+          const cat = iou.type === 'owed_to_me' ? 'credited' : 'expenses';
+          state.entries.push({
+            id: 'e_' + Date.now(),
+            category: cat,
+            amount: iou.amount,
+            month: state.selectedMonth,
+            date: state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`,
+            note: `Settled: ${iou.person}`,
+            createdAt: Date.now()
+          });
+          state.ious = state.ious.filter(x => x.id !== iou.id);
+          saveState();
+          render();
+          showToast(`Settled & logged to ${CATEGORY_META[cat].label}`);
+        }
+        return;
+      }
+      const delIou = e.target.closest('[data-del-iou]');
+      if (delIou) {
+        state.ious = (state.ious || []).filter(x => x.id !== delIou.dataset.delIou);
+        saveState();
+        render();
+        showToast('IOU removed');
+      }
     });
 
     render();
