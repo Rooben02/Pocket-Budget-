@@ -500,7 +500,7 @@
             </button>
           </div>
           <p id="wiseMoneyQuote" class="mt-2.5 text-xs text-emerald-50 leading-relaxed">
-            Pay your priorities first — set aside Mom's Gift and KSFE Savings right after salary arrives, and pause 24 hours before any unplanned buy.
+            Pay your priorities first — clear your savings, investments, and key bills right after salary arrives, and pause 24 hours before impulse buys.
           </p>
         </div>
 
@@ -522,10 +522,22 @@
           <div id="monthlyChecklistItems" class="space-y-2.5 pt-1"></div>
 
           <!-- Add Custom Monthly Reminder Form -->
-          <form id="addChecklistForm" class="pt-2 border-t border-slate-100 flex items-center gap-2">
-            <input id="newCheckTitle" type="text" maxlength="40" placeholder="Add monthly item (e.g., Rent, SIP)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <input id="newCheckAmount" type="number" min="0" step="any" placeholder="Amt" class="w-20 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <button type="submit" class="ripple-btn shrink-0 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Add</button>
+          <form id="addChecklistForm" class="pt-2.5 border-t border-slate-100 space-y-2">
+            <div class="flex items-center gap-2">
+              <input id="newCheckTitle" type="text" maxlength="40" placeholder="Add item (e.g., Rent, SIP, Gift)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input id="newCheckAmount" type="number" min="0" step="any" placeholder="Amt" class="w-20 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="newCheckCategory" aria-label="Checklist category" class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="expenses">Expenses</option>
+                <option value="savings">Savings</option>
+                <option value="investments">Investments</option>
+                <option value="gifts">Gifts</option>
+                <option value="creditcard">Credit Card</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
+              <button type="submit" class="ripple-btn shrink-0 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Add Item</button>
+            </div>
           </form>
         </div>
       </section>
@@ -660,7 +672,7 @@
 
         <div>
           <label for="entryNote" class="block text-xs font-semibold text-slate-600 mb-1">Note (optional)</label>
-          <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Salary, Rent, SIP, Nifty 50, KSFE" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Salary, Rent, SIP, Nifty 50, FD" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
 
         <div class="pt-1 flex gap-2">
@@ -819,19 +831,14 @@
     };
 
     const WISE_QUOTES = [
-      "Pay your priorities first — clear Mom's Gift and KSFE Savings right after salary arrives, and pause 24 hours before impulse buys.",
-      "Every rupee you don't spend impulsively today grows your Grand Total cushion for next month.",
-      "Keep fixed expenses lean so your KSFE Savings and family gifts stay stress-free every month.",
+      "Pay your priorities first — clear your savings, investments, and key bills right after salary arrives, and pause 24 hours before impulse buys.",
+      "Every amount you skip on impulse buys today grows your Grand Total cushion for next month.",
+      "Keep fixed expenses lean so your monthly savings, investments, and family gifts stay stress-free.",
       "Small daily leaks add up fast — review your Entries tab once a week to catch unplanned spending early.",
       "Saving first and spending what's left beats spending first and hoping something is left."
     ];
 
-    const DEFAULT_CHECKLIST_ITEMS = [
-      { id: 'chk_mom_gift', title: "Mom's Gift", category: 'gifts', defaultAmount: 0, matchKey: 'mom', core: true },
-      { id: 'chk_ksfe', title: 'KSFE Savings', category: 'savings', defaultAmount: 0, matchKey: 'ksfe', core: true },
-      { id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true },
-      { id: 'chk_investments', title: 'SIP / Investments', category: 'investments', defaultAmount: 0, matchKey: 'sip', core: true }
-    ];
+    const DEFAULT_CHECKLIST_ITEMS = [];
 
     const DEFAULT_STATE = {
       currency: 'INR',
@@ -840,7 +847,7 @@
       isSample: false,
       passcodeEnabled: true,
       passcode: '1234',
-      checklistItems: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS)),
+      checklistItems: [],
       checklistDone: {},
       entries: []
     };
@@ -863,18 +870,9 @@
         isSample: Boolean(parsed.isSample),
         passcodeEnabled: parsed.passcodeEnabled !== false,
         passcode: typeof parsed.passcode === 'string' && /^\d{4}$/.test(parsed.passcode) ? parsed.passcode : '1234',
-        checklistItems: (() => {
-          const base = Array.isArray(parsed.checklistItems) && parsed.checklistItems.length
-            ? parsed.checklistItems.slice()
-            : JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
-          if (!base.some(it => it.id === 'chk_credit_card')) {
-            base.push({ id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true });
-          }
-          if (!base.some(it => it.id === 'chk_investments')) {
-            base.push({ id: 'chk_investments', title: 'SIP / Investments', category: 'investments', defaultAmount: 0, matchKey: 'sip', core: true });
-          }
-          return base;
-        })(),
+        checklistItems: Array.isArray(parsed.checklistItems)
+          ? parsed.checklistItems.slice()
+          : JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS)),
         checklistDone: parsed.checklistDone && typeof parsed.checklistDone === 'object'
           ? parsed.checklistDone
           : {},
@@ -1345,35 +1343,37 @@
       document.getElementById('wiseMoneyQuote').textContent = WISE_QUOTES[quoteIndex % WISE_QUOTES.length];
       document.getElementById('checklistMonthSubtitle').textContent = formatMonthLabel(ym);
 
-      const items = state.checklistItems || DEFAULT_CHECKLIST_ITEMS;
+      const items = Array.isArray(state.checklistItems) ? state.checklistItems : [];
       let clearedCount = 0;
 
-      const html = items.map(item => {
-        const status = isChecklistItemCleared(item, ym, current.items);
-        if (status.cleared) clearedCount++;
-        const meta = CATEGORY_META[item.category] || CATEGORY_META.expenses;
-        return `
-          <div class="p-3 rounded-2xl border ${status.cleared ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200/80'} flex items-center justify-between gap-2.5">
-            <div class="flex items-center gap-3 min-w-0">
-              <button data-toggle-check="${item.id}" class="ripple-btn w-6 h-6 rounded-lg flex items-center justify-center border-2 shrink-0 ${status.cleared ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-300 text-transparent'}" aria-label="Toggle ${escapeHtml(item.title)}">
-                <i data-lucide="check" class="w-4 h-4"></i>
-              </button>
-              <div class="min-w-0">
-                <div class="text-sm font-bold ${status.cleared ? 'line-through text-slate-500' : 'text-slate-900'} truncate">${escapeHtml(item.title)}</div>
-                <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
-                  <span class="font-semibold">${meta.label}</span>
-                  ${item.defaultAmount > 0 ? `<span>· Target ${formatMoney(item.defaultAmount)}</span>` : ''}
-                  ${status.cleared ? '<span class="text-emerald-700 font-bold">· Cleared</span>' : '<span class="text-amber-600 font-semibold">· Pending</span>'}
+      const html = items.length === 0
+        ? `<div class="text-center py-6 px-3 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">No monthly commitments yet. Add your recurring bills, savings, or gifts below!</div>`
+        : items.map(item => {
+            const status = isChecklistItemCleared(item, ym, current.items);
+            if (status.cleared) clearedCount++;
+            const meta = CATEGORY_META[item.category] || CATEGORY_META.expenses;
+            return `
+              <div class="p-3 rounded-2xl border ${status.cleared ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200/80'} flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-3 min-w-0">
+                  <button data-toggle-check="${item.id}" class="ripple-btn w-6 h-6 rounded-lg flex items-center justify-center border-2 shrink-0 ${status.cleared ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-300 text-transparent'}" aria-label="Toggle ${escapeHtml(item.title)}">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                  </button>
+                  <div class="min-w-0">
+                    <div class="text-sm font-bold ${status.cleared ? 'line-through text-slate-500' : 'text-slate-900'} truncate">${escapeHtml(item.title)}</div>
+                    <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                      <span class="font-semibold">${meta.label}</span>
+                      ${item.defaultAmount > 0 ? `<span>· Target ${formatMoney(item.defaultAmount)}</span>` : ''}
+                      ${status.cleared ? '<span class="text-emerald-700 font-bold">· Cleared</span>' : '<span class="text-amber-600 font-semibold">· Pending</span>'}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  ${!status.cleared ? `<button data-pay-check="${item.id}" class="ripple-btn px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Pay & Log</button>` : ''}
+                  <button data-del-check="${item.id}" class="p-1.5 rounded-xl hover:bg-rose-100 text-slate-400 hover:text-rose-600" aria-label="Remove item"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              ${!status.cleared ? `<button data-pay-check="${item.id}" class="ripple-btn px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Pay & Log</button>` : ''}
-              ${!item.core ? `<button data-del-check="${item.id}" class="p-1.5 rounded-xl hover:bg-rose-100 text-slate-400 hover:text-rose-600" aria-label="Remove item"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+            `;
+          }).join('');
 
       document.getElementById('monthlyChecklistItems').innerHTML = html;
       const pct = items.length ? Math.round((clearedCount / items.length) * 100) : 0;
@@ -1420,7 +1420,7 @@
           goods.push(`Your running Grand Total cushion stands at ${formatMoney(current.grandTotal)}, giving you breathing room.`);
         }
         if (clearedCount === items.length && items.length > 0) {
-          goods.push(`All ${items.length} monthly checklist commitments (including Mom's Gift & KSFE Savings) are cleared!`);
+          goods.push(`All ${items.length} monthly checklist commitments are cleared!`);
         }
         if (prev && prev.sums.expenses > 0 && current.sums.expenses > 0 && current.sums.expenses < prev.sums.expenses) {
           const drop = prev.sums.expenses - current.sums.expenses;
@@ -1438,7 +1438,7 @@
         }
         if (salary > 0 && savingsRate < 20) {
           const target = Math.round(salary * 0.2);
-          improves.push(`Try lifting your Savings (including KSFE) toward 20% of salary (~${formatMoney(target)}/month).`);
+          improves.push(`Try lifting your Savings (Savings + Investments) toward 20% of salary (~${formatMoney(target)}/month).`);
         }
         if (salary > 0 && current.sums.creditcard > salary * 0.25) {
           improves.push(`Credit Card spending is ${Math.round((current.sums.creditcard / salary) * 100)}% of your income this month. Keep card bills under 20–25% so you can clear them in full.`);
@@ -1459,7 +1459,7 @@
         goods.push('Tracking every expense in one place is already the best first step toward smarter spending.');
       }
       if (improves.length === 0) {
-        improves.push('Your numbers look well balanced this month! Consider moving part of your leftover surplus into extra KSFE Savings.');
+        improves.push('Your numbers look well balanced this month! Consider moving part of your leftover surplus into extra Savings or Investments.');
       }
 
       // Health Badge
@@ -1771,18 +1771,18 @@
       e.preventDefault();
       const title = document.getElementById('newCheckTitle').value.trim();
       const amt = parseFloat(document.getElementById('newCheckAmount').value) || 0;
+      const cat = document.getElementById('newCheckCategory').value || 'expenses';
       if (!title) {
         showToast('Enter a checklist item name');
         return;
       }
-      if (!state.checklistItems) state.checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+      if (!Array.isArray(state.checklistItems)) state.checklistItems = [];
       state.checklistItems.push({
         id: 'chk_' + Date.now(),
         title,
-        category: 'expenses',
+        category: cat,
         defaultAmount: amt,
-        matchKey: title.toLowerCase(),
-        core: false
+        matchKey: title.toLowerCase()
       });
       document.getElementById('newCheckTitle').value = '';
       document.getElementById('newCheckAmount').value = '';
