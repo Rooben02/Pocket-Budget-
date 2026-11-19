@@ -244,14 +244,6 @@
             </div>
           </div>
 
-          <!-- Auto-Carryover Toggle -->
-          <div class="mt-3.5 flex items-center justify-between text-xs">
-            <label for="autoCarryToggle" class="flex items-center gap-2 text-slate-200 cursor-pointer select-none">
-              <input id="autoCarryToggle" type="checkbox" class="sr-only peer" checked />
-              <div class="w-9 h-5 bg-white/20 rounded-full peer peer-checked:bg-emerald-500 relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
-              <span>Auto-carry balance to next month</span>
-            </label>
-          </div>
         </div>
 
         <!-- Quick Copy Salary Prompt (shown when current month has no salary yet & previous month had salary) -->
@@ -307,8 +299,11 @@
         <div>
           <div class="flex items-center justify-between mb-2.5">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Categories</h2>
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] text-slate-400">Tap to add</span>
+            <div class="flex items-center gap-1.5">
+              <button id="quickJumpScanBtn" title="Scan Bill or Paste SMS" class="ripple-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                <i data-lucide="scan-line" class="w-3.5 h-3.5"></i>
+                <span>Scan / SMS</span>
+              </button>
               <button id="viewModeToggleBtn" title="Switch Card / Compact View" class="ripple-btn p-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700" aria-label="Toggle compact view">
                 <i data-lucide="list" class="w-3.5 h-3.5"></i>
               </button>
@@ -454,6 +449,10 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- TAB 2: ENTRIES LEDGER -->
+      <section id="tab-entries" class="hidden space-y-3">
         <!-- Smart Bill & Screenshot Scanner -->
         <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div class="flex items-center justify-between gap-2">
@@ -562,30 +561,6 @@
             </button>
           </form>
         </div>
-
-        <!-- Monthly Allocation Chart -->
-        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Month Breakdown</h2>
-            <span id="chartSubtitle" class="text-xs font-semibold text-slate-600"></span>
-          </div>
-          <div class="relative h-52">
-            <canvas id="monthChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Recent Entries Preview -->
-        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">This Month's Entries</h2>
-            <button id="viewAllEntriesBtn" class="text-xs font-semibold text-emerald-700 hover:underline">View all</button>
-          </div>
-          <div id="recentEntriesList" class="space-y-2"></div>
-        </div>
-      </section>
-
-      <!-- TAB 2: ENTRIES LEDGER -->
-      <section id="tab-entries" class="hidden space-y-3">
         <div class="relative">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
           <input id="entriesSearchInput" type="search" placeholder="Search notes or amounts..." class="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -666,23 +641,6 @@
           </div>
         </div>
 
-        <!-- Savings & Investment Goals Tracker -->
-        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Wealth Targets</span>
-              <h2 class="text-sm font-extrabold text-slate-900">Savings & Investment Goals</h2>
-            </div>
-            <i data-lucide="target" class="w-4 h-4 text-emerald-600"></i>
-          </div>
-          <div id="goalsList" class="space-y-2.5"></div>
-          <form id="addGoalForm" class="pt-2 border-t border-slate-100 flex items-center gap-2">
-            <input id="newGoalTitle" type="text" maxlength="32" placeholder="Goal (e.g., Emergency Fund)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <input id="newGoalTarget" type="number" min="1" step="any" placeholder="Target" class="w-24 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <button type="submit" class="ripple-btn shrink-0 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Add</button>
-          </form>
-        </div>
-
         <div id="monthsLedgerList" class="space-y-2.5"></div>
       </section>
 
@@ -746,6 +704,23 @@
           </form>
         </div>
 
+        <!-- Savings & Investment Goals Tracker -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Wealth Targets</span>
+              <h2 class="text-sm font-extrabold text-slate-900">Savings & Investment Goals</h2>
+            </div>
+            <i data-lucide="target" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div id="goalsList" class="space-y-2.5"></div>
+          <form id="addGoalForm" class="pt-2 border-t border-slate-100 flex items-center gap-2">
+            <input id="newGoalTitle" type="text" maxlength="32" placeholder="Goal (e.g., Emergency Fund)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="newGoalTarget" type="number" min="1" step="any" placeholder="Target" class="w-24 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button type="submit" class="ripple-btn shrink-0 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Add</button>
+          </form>
+        </div>
+
         <!-- Splits & IOUs (Owed to Me / I Owe) -->
         <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
@@ -774,6 +749,16 @@
 
       <!-- TAB 5: SPENDING INSIGHTS & SUGGESTIONS -->
       <section id="tab-insights" class="hidden space-y-4">
+        <!-- Monthly Allocation Chart -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Month Breakdown</h2>
+            <span id="chartSubtitle" class="text-xs font-semibold text-slate-600"></span>
+          </div>
+          <div class="relative h-52">
+            <canvas id="monthChart"></canvas>
+          </div>
+        </div>
         <!-- Monthly Health Score Card -->
         <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
@@ -832,7 +817,7 @@
     <nav class="fixed bottom-0 left-0 right-0 sm:sticky sm:bottom-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 grid grid-cols-5 gap-1 max-w-[480px] mx-auto">
       <button data-tab="overview" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-emerald-700 bg-emerald-50">
         <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-        <span class="text-[10px] font-bold">Overview</span>
+        <span class="text-[10px] font-bold">Home</span>
       </button>
       <button data-tab="entries" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
         <i data-lucide="list" class="w-4 h-4"></i>
@@ -844,7 +829,7 @@
       </button>
       <button data-tab="checklist" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
         <i data-lucide="check-square" class="w-4 h-4"></i>
-        <span class="text-[10px] font-semibold">Checklist</span>
+        <span class="text-[10px] font-semibold">Plan</span>
       </button>
       <button data-tab="insights" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
         <i data-lucide="sparkles" class="w-4 h-4"></i>
@@ -934,6 +919,18 @@
           Use on Android like a native app
         </div>
         <p class="text-emerald-800 leading-relaxed">Tap <strong>Download Standalone App (.html)</strong> below to save PocketBudget with your current data. Open it in Chrome on Android and tap <strong>⋮ → Add to Home screen</strong> (or bookmark it).</p>
+      </div>
+
+      <!-- Auto-Carryover Toggle -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-4 h-4 text-emerald-600"></i>
+          Auto-carry balance to next month
+        </span>
+        <label for="autoCarryToggle" class="relative inline-flex items-center cursor-pointer">
+          <input id="autoCarryToggle" type="checkbox" class="sr-only peer" checked />
+          <div class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-600 relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+        </label>
       </div>
 
       <!-- Currency Selector -->
@@ -1609,13 +1606,7 @@
         ccCard.classList.add('hidden');
       }
 
-      // Recent Entries (Overview)
-      const recentEl = document.getElementById('recentEntriesList');
-      if (current.items.length === 0) {
-        recentEl.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">No entries for ${formatMonthLabel(state.selectedMonth)} yet. Tap + or a category card above to add.</div>`;
-      } else {
-        recentEl.innerHTML = current.items.slice(0, 4).map(item => renderEntryRow(item)).join('');
-      }
+      // Recent Entries Preview removed from compact Home (all entries live in Entries tab)
 
       // Full Entries (Tab 2)
       const q = searchQuery.trim().toLowerCase();
@@ -1957,6 +1948,9 @@
         const isCurrent = btn.dataset.tab === tab;
         btn.className = `nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl ${isCurrent ? 'text-emerald-700 bg-emerald-50 font-bold' : 'text-slate-500 font-semibold'}`;
       });
+      if (tab === 'insights' || tab === 'months') {
+        render();
+      }
     }
 
     function setModalCategory(cat) {
@@ -2077,7 +2071,10 @@
     document.getElementById('openAddModalBtn').addEventListener('click', () => openModal('salary'));
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('viewAllEntriesBtn').addEventListener('click', () => switchTab('entries'));
+    document.getElementById('quickJumpScanBtn').addEventListener('click', () => {
+      switchTab('entries');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
     document.getElementById('openSettingsBtn').addEventListener('click', () => {
       resetArmed = false;
