@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#059669" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="application-name" content="PocketBudget" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23059669'/%3E%3Cpath d='M18 24h28a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V22a6 6 0 0 1 6-6h24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='42' cy='36' r='2.5' fill='white'/%3E%3C/svg%3E" />
+  <title>PocketBudget — Personal Budget & Carryover App</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      overflow-x: clip;
+      margin: 0;
+    }
+    .app-shell {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background-color: #f8fafc;
+      position: relative;
+      padding-bottom: 164px;
+      box-shadow: 0 0 40px rgba(15, 23, 42, 0.06);
+    }
+    @media (min-width: 640px) {
+      body {
+        padding: 16px 0;
+      }
+      .app-shell {
+        min-height: calc(100vh - 32px);
+        border-radius: 28px;
+        overflow-x: clip;
+        border: 1px solid #e2e8f0;
+      }
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .ripple-btn {
+      transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .ripple-btn:active {
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell flex flex-col">
+    <!-- Top Android-style App Bar -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200/80 px-3.5 pt-3 pb-3">
+      <div class="flex items-center justify-between gap-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
+            <i data-lucide="wallet" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-[15px] font-extrabold text-slate-900 leading-tight truncate">PocketBudget</h1>
+            <p class="text-[10px] font-medium text-slate-500 truncate">Monthly Budget</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="quickSaveBtn" title="Save all data & download backup" class="ripple-btn flex items-center gap-1 px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm" aria-label="Save Data">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            <span id="quickSaveLabel">Save</span>
+          </button>
+          <button id="lockAppBtn" title="Lock App" class="ripple-btn p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" aria-label="Lock App">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+          </button>
+          <button id="openSettingsBtn" title="Backup & Settings" class="ripple-btn p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" aria-label="Backup and Settings">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Month Switcher -->
+      <div class="mt-3 flex items-center justify-between bg-slate-100 rounded-2xl p-1">
+        <button id="prevMonthBtn" class="ripple-btn p-2 rounded-xl hover:bg-white text-slate-700 transition" aria-label="Previous Month">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <button id="jumpTodayBtn" class="ripple-btn flex items-center gap-2 px-3 py-1 rounded-xl hover:bg-white/80 transition" title="Jump to current month">
+          <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
+          <span id="currentMonthLabel" class="text-sm font-bold text-slate-900">November 2026</span>
+        </button>
+        <button id="nextMonthBtn" class="ripple-btn p-2 rounded-xl hover:bg-white text-slate-700 transition" aria-label="Next Month">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sample Data Notice Banner -->
+    <div id="sampleBanner" class="hidden mx-4 mt-3 px-3.5 py-2.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 shrink-0"></i>
+        <p class="text-xs text-amber-900 truncate">Demo data loaded so you can test carryover.</p>
+      </div>
+      <button id="clearSampleBtn" class="ripple-btn shrink-0 text-xs font-semibold text-amber-800 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-1 rounded-lg">
+        Start Fresh
+      </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 px-4 pt-4 space-y-4">
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview" class="space-y-4">
+        <!-- Grand Total / Carryover Hero Card -->
+        <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white p-5 shadow-md">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                Grand Total Balance
+              </span>
+              <div id="grandTotalValue" class="text-3xl font-extrabold tracking-tight mt-1">₹0</div>
+              <p class="text-[11px] text-slate-300 mt-0.5">Prev. Balance + This Month Net</p>
+            </div>
+            <button id="rolloverBtn" class="ripple-btn flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-3 py-2 rounded-2xl shadow-sm shrink-0">
+              <span>Carry to Dec</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Separate Carried Balance vs This Month Salary Strip -->
+          <div class="mt-4 pt-3.5 border-t border-white/10 grid grid-cols-2 gap-2 text-left">
+            <div class="bg-white/10 rounded-2xl px-3 py-2">
+              <div class="text-[10px] font-medium text-slate-300">Carried Balance (Prev.)</div>
+              <div id="openingBalanceValue" class="text-sm font-extrabold text-amber-300 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-white/10 rounded-2xl px-3 py-2">
+              <div class="text-[10px] font-medium text-slate-300">This Month's Salary</div>
+              <div id="heroSalaryValue" class="text-sm font-extrabold text-emerald-300 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-white/5 rounded-2xl px-3 py-2">
+              <div class="text-[10px] font-medium text-slate-300">This Month Net</div>
+              <div id="monthNetValue" class="text-xs font-bold text-emerald-300 mt-0.5">₹0</div>
+            </div>
+            <div class="bg-white/5 rounded-2xl px-3 py-2">
+              <div class="text-[10px] font-medium text-slate-300">Total Saved (All Months)</div>
+              <div id="cumulativeSavingsValue" class="text-xs font-bold text-sky-300 mt-0.5">₹0</div>
+            </div>
+          </div>
+
+          <!-- Auto-Carryover Toggle -->
+          <div class="mt-3.5 flex items-center justify-between text-xs">
+            <label for="autoCarryToggle" class="flex items-center gap-2 text-slate-200 cursor-pointer select-none">
+              <input id="autoCarryToggle" type="checkbox" class="sr-only peer" checked />
+              <div class="w-9 h-5 bg-white/20 rounded-full peer peer-checked:bg-emerald-500 relative transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+              <span>Auto-carry balance to next month</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quick Copy Salary Prompt (shown when current month has no salary yet & previous month had salary) -->
+        <div id="copySalaryBar" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <i data-lucide="repeat" class="w-4 h-4 text-emerald-700 shrink-0"></i>
+            <span id="copySalaryText" class="text-xs font-medium text-emerald-900 truncate">No salary added yet for this month.</span>
+          </div>
+          <button id="copySalaryBtn" class="ripple-btn shrink-0 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl">
+            Copy Last
+          </button>
+        </div>
+
+        <!-- Income Allocation Progress Bar -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-bold text-slate-700">Monthly Income Allocated</span>
+            <span id="salaryUsageLabel" class="font-semibold text-slate-500">0% used</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+            <div id="barExpenses" class="h-full bg-rose-500 transition-all duration-300" style="width: 0%"></div>
+            <div id="barCreditCard" class="h-full bg-indigo-500 transition-all duration-300" style="width: 0%"></div>
+            <div id="barMisc" class="h-full bg-violet-500 transition-all duration-300" style="width: 0%"></div>
+            <div id="barGifts" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%"></div>
+            <div id="barSavings" class="h-full bg-sky-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span>Exp</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span>Card</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-violet-500"></span>Misc</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Gifts</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span>Saved</span>
+            </div>
+            <span id="salaryLeftLabel" class="font-semibold text-slate-700 shrink-0"></span>
+          </div>
+        </div>
+
+        <!-- 4 Category Cards (2x2 Grid) -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Categories</h2>
+            <span class="text-[11px] text-slate-400">Tap a card to add</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Salary -->
+            <button data-quick-cat="salary" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-emerald-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <i data-lucide="banknote" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+ Income</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Salary</div>
+              <div id="catTotal-salary" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-salary" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Amount Credited -->
+            <button data-quick-cat="credited" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-teal-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center">
+                  <i data-lucide="landmark" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">+ Credit</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Amount Credited</div>
+              <div id="catTotal-credited" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-credited" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Expenses -->
+            <button data-quick-cat="expenses" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-rose-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center">
+                  <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">- Outflow</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Expenses</div>
+              <div id="catTotal-expenses" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-expenses" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Credit Card -->
+            <button data-quick-cat="creditcard" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-indigo-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                  <i data-lucide="credit-card" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">- Card</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Credit Card</div>
+              <div id="catTotal-creditcard" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-creditcard" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Miscellaneous -->
+            <button data-quick-cat="misc" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-violet-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center">
+                  <i data-lucide="receipt" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">- Outflow</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Miscellaneous</div>
+              <div id="catTotal-misc" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-misc" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Gifts -->
+            <button data-quick-cat="gifts" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-amber-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <i data-lucide="gift" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">- Outflow</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Gifts</div>
+              <div id="catTotal-gifts" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-gifts" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Savings (Full-width Highlight Card) -->
+            <button data-quick-cat="savings" class="ripple-btn col-span-2 text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-sky-300 transition flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                  <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-slate-500">Savings (KSFE & Goals)</div>
+                  <div id="catTotal-savings" class="text-lg font-extrabold text-slate-900">₹0</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">Saved</span>
+                <div id="catCount-savings" class="text-[11px] text-slate-400 mt-1">0 entries</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Monthly Allocation Chart -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Month Breakdown</h2>
+            <span id="chartSubtitle" class="text-xs font-semibold text-slate-600"></span>
+          </div>
+          <div class="relative h-52">
+            <canvas id="monthChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Entries Preview -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">This Month's Entries</h2>
+            <button id="viewAllEntriesBtn" class="text-xs font-semibold text-emerald-700 hover:underline">View all</button>
+          </div>
+          <div id="recentEntriesList" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ENTRIES LEDGER -->
+      <section id="tab-entries" class="hidden space-y-3">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input id="entriesSearchInput" type="search" placeholder="Search notes or amounts..." class="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <button data-filter="all" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white shrink-0">All</button>
+          <button data-filter="salary" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Salary</button>
+          <button data-filter="credited" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Credited</button>
+          <button data-filter="expenses" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Expenses</button>
+          <button data-filter="creditcard" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Credit Card</button>
+          <button data-filter="misc" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Misc</button>
+          <button data-filter="gifts" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Gifts</button>
+          <button data-filter="savings" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Savings</button>
+        </div>
+        <div id="fullEntriesList" class="space-y-2"></div>
+      </section>
+
+      <!-- TAB 3: ALL MONTHS & GRAND TOTAL LEDGER -->
+      <section id="tab-months" class="hidden space-y-3">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-3xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-semibold text-emerald-800">Running Grand Total (Latest Month)</div>
+            <div id="overallGrandTotalValue" class="text-2xl font-extrabold text-emerald-950 mt-0.5">₹0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-semibold text-emerald-800">Cumulative Savings</div>
+            <div id="overallSavingsValue" class="text-lg font-bold text-sky-800 mt-0.5">₹0</div>
+          </div>
+        </div>
+
+        <!-- Multi-Month Trend Chart -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Trend</h2>
+            <span class="text-[11px] font-medium text-slate-400">Grand Total vs Outflows</span>
+          </div>
+          <div class="relative h-48">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div id="monthsLedgerList" class="space-y-2.5"></div>
+      </section>
+
+      <!-- TAB 4: MONTHLY CHECKLIST & WISE MONEY REMINDER -->
+      <section id="tab-checklist" class="hidden space-y-4">
+        <!-- Mindful Money Reminder Card -->
+        <div class="rounded-3xl bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 text-white p-4 shadow-md">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                <i data-lucide="heart-handshake" class="w-4 h-4 text-emerald-100"></i>
+              </div>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Money Reminder</span>
+                <h2 class="text-sm font-extrabold leading-tight">Use Your Money Wisely</h2>
+              </div>
+            </div>
+            <button id="nextReminderBtn" class="ripple-btn p-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white" title="Next tip" aria-label="Next reminder">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <p id="wiseMoneyQuote" class="mt-2.5 text-xs text-emerald-50 leading-relaxed">
+            Pay your priorities first — set aside Mom's Gift and KSFE Savings right after salary arrives, and pause 24 hours before any unplanned buy.
+          </p>
+        </div>
+
+        <!-- Monthly Checklist Header & Progress -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Commitments</h2>
+              <p id="checklistMonthSubtitle" class="text-xs text-slate-500 mt-0.5">November 2026</p>
+            </div>
+            <span id="checklistProgressBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">0 / 2 cleared</span>
+          </div>
+
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="checklistProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+
+          <!-- Checklist Items Container -->
+          <div id="monthlyChecklistItems" class="space-y-2.5 pt-1"></div>
+
+          <!-- Add Custom Monthly Reminder Form -->
+          <form id="addChecklistForm" class="pt-2 border-t border-slate-100 flex items-center gap-2">
+            <input id="newCheckTitle" type="text" maxlength="40" placeholder="Add monthly item (e.g., Rent, SIP)" class="flex-1 min-w-0 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <input id="newCheckAmount" type="number" min="0" step="any" placeholder="Amt" class="w-20 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button type="submit" class="ripple-btn shrink-0 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Add</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 5: SPENDING INSIGHTS & SUGGESTIONS -->
+      <section id="tab-insights" class="hidden space-y-4">
+        <!-- Monthly Health Score Card -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Monthly Health</span>
+              <h2 id="insightsMonthTitle" class="text-sm font-extrabold text-slate-900">November 2026 Review</h2>
+            </div>
+            <span id="healthBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">Healthy</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] font-medium text-slate-500">Savings Rate</div>
+              <div id="insightSavingsRate" class="text-sm font-extrabold text-sky-700 mt-0.5">0%</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] font-medium text-slate-500">Spent Ratio</div>
+              <div id="insightSpendRate" class="text-sm font-extrabold text-rose-600 mt-0.5">0%</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] font-medium text-slate-500">Checklist</div>
+              <div id="insightChecklistRate" class="text-sm font-extrabold text-emerald-700 mt-0.5">0/2</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- What's Going Well -->
+        <div class="bg-white rounded-3xl p-4 border border-emerald-200/80 shadow-sm space-y-2.5">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <i data-lucide="thumbs-up" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-800">What You're Doing Well</h3>
+          </div>
+          <div id="goodHabitsList" class="space-y-2"></div>
+        </div>
+
+        <!-- Suggestions to Improve -->
+        <div class="bg-white rounded-3xl p-4 border border-amber-200/80 shadow-sm space-y-2.5">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+              <i data-lucide="lightbulb" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-800">How You Can Improve</h3>
+          </div>
+          <div id="improveTipsList" class="space-y-2"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Action Button (Android FAB) -->
+    <button id="openAddModalBtn" class="ripple-btn fixed bottom-[76px] right-4 sm:absolute sm:bottom-[76px] sm:right-4 z-30 w-12 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center" aria-label="Add Entry">
+      <i data-lucide="plus" class="w-6 h-6"></i>
+    </button>
+
+    <!-- Bottom Android Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 sm:sticky sm:bottom-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 grid grid-cols-5 gap-1 max-w-[480px] mx-auto">
+      <button data-tab="overview" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-emerald-700 bg-emerald-50">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+        <span class="text-[10px] font-bold">Overview</span>
+      </button>
+      <button data-tab="entries" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
+        <i data-lucide="list" class="w-4 h-4"></i>
+        <span class="text-[10px] font-semibold">Entries</span>
+      </button>
+      <button data-tab="months" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
+        <i data-lucide="trending-up" class="w-4 h-4"></i>
+        <span class="text-[10px] font-semibold">Grand Total</span>
+      </button>
+      <button data-tab="checklist" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
+        <i data-lucide="check-square" class="w-4 h-4"></i>
+        <span class="text-[10px] font-semibold">Checklist</span>
+      </button>
+      <button data-tab="insights" class="nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl text-slate-500">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span class="text-[10px] font-semibold">Insights</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Add / Edit Entry Bottom Sheet Modal -->
+  <div id="entryModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 id="modalTitle" class="text-base font-bold text-slate-900">Add Budget Entry</h3>
+        <button id="closeModalBtn" class="p-2 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Close">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="entryForm" class="space-y-3.5">
+        <input type="hidden" id="editEntryId" value="" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Category</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-cat-pick="salary" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800">Salary</button>
+            <button type="button" data-cat-pick="credited" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Credited</button>
+            <button type="button" data-cat-pick="expenses" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Expenses</button>
+            <button type="button" data-cat-pick="creditcard" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Credit Card</button>
+            <button type="button" data-cat-pick="misc" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Misc</button>
+            <button type="button" data-cat-pick="gifts" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Gifts</button>
+            <button type="button" data-cat-pick="savings" class="cat-pick-btn col-span-3 py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Savings</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="entryAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount</label>
+            <input id="entryAmount" type="number" min="0" step="any" required placeholder="0.00" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label for="entryDate" class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input id="entryDate" type="date" required class="w-full rounded-2xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <!-- Quick Amount Chips -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <span class="text-[11px] font-medium text-slate-400 shrink-0">Quick add:</span>
+          <button type="button" data-add-amt="500" class="quick-amt-btn ripple-btn px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 shrink-0">+500</button>
+          <button type="button" data-add-amt="1000" class="quick-amt-btn ripple-btn px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 shrink-0">+1,000</button>
+          <button type="button" data-add-amt="5000" class="quick-amt-btn ripple-btn px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 shrink-0">+5,000</button>
+          <button type="button" data-add-amt="10000" class="quick-amt-btn ripple-btn px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 shrink-0">+10,000</button>
+        </div>
+
+        <div>
+          <label for="entryNote" class="block text-xs font-semibold text-slate-600 mb-1">Note (optional)</label>
+          <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Monthly salary, Rent, Birthday gift, FD" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+
+        <div class="pt-1 flex gap-2">
+          <button type="button" id="cancelModalBtn" class="ripple-btn flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="ripple-btn flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-sm">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings & Backup Bottom Sheet Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Data & Android App Setup</h3>
+        <button id="closeSettingsBtn" class="p-2 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Close Settings">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 text-xs text-emerald-900 space-y-1">
+        <div class="font-bold flex items-center gap-1.5">
+          <i data-lucide="smartphone" class="w-4 h-4 text-emerald-700"></i>
+          Use on Android like a native app
+        </div>
+        <p class="text-emerald-800 leading-relaxed">Tap <strong>Download Standalone App (.html)</strong> below to save PocketBudget with your current data. Open it in Chrome on Android and tap <strong>⋮ → Add to Home screen</strong> (or bookmark it).</p>
+      </div>
+
+      <!-- Currency Selector -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <i data-lucide="coins" class="w-4 h-4 text-emerald-600"></i>
+          Currency
+        </span>
+        <select id="currencySelect" aria-label="Currency" class="text-xs font-bold bg-white text-slate-800 rounded-xl px-3 py-1.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="INR">₹ INR (Rupee)</option>
+          <option value="USD">$ USD (Dollar)</option>
+          <option value="EUR">€ EUR (Euro)</option>
+          <option value="GBP">£ GBP (Pound)</option>
+        </select>
+      </div>
+
+      <!-- Passcode Management -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="key-round" class="w-4 h-4 text-emerald-600"></i>
+            App Passcode (4 Digits)
+          </span>
+          <label for="passcodeEnabledToggle" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
+            <input id="passcodeEnabledToggle" type="checkbox" class="accent-emerald-600 w-4 h-4" checked />
+            <span>Require PIN</span>
+          </label>
+        </div>
+        <form id="changePinForm" class="flex items-center gap-2">
+          <input id="newPinInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="New 4-digit PIN" class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <button type="submit" class="ripple-btn px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Update PIN</button>
+        </form>
+      </div>
+
+      <div class="space-y-2">
+        <button id="downloadAppHtmlBtn" class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-sm font-bold text-white shadow-sm">
+          <span class="flex items-center gap-2.5"><i data-lucide="smartphone-charging" class="w-4 h-4"></i>Download Standalone App (.html)</span>
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+
+        <button id="exportCsvBtn" class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-800">
+          <span class="flex items-center gap-2.5"><i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>Export Spreadsheet (CSV)</span>
+          <i data-lucide="download" class="w-4 h-4 text-slate-400"></i>
+        </button>
+
+        <button id="backupJsonBtn" class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-800">
+          <span class="flex items-center gap-2.5"><i data-lucide="shield-check" class="w-4 h-4 text-sky-600"></i>Download Full Backup (JSON)</span>
+          <i data-lucide="download" class="w-4 h-4 text-slate-400"></i>
+        </button>
+
+        <label class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-800 cursor-pointer">
+          <span class="flex items-center gap-2.5"><i data-lucide="upload" class="w-4 h-4 text-amber-600"></i>Restore from Backup (JSON)</span>
+          <input id="restoreJsonInput" type="file" accept=".json,application/json" class="hidden" />
+          <span class="text-xs text-slate-500">Choose file</span>
+        </label>
+
+        <button id="resetAllBtn" class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-sm font-semibold text-rose-700">
+          <span class="flex items-center gap-2.5"><i data-lucide="trash-2" class="w-4 h-4"></i>Reset All Data</span>
+          <span id="resetConfirmHint" class="text-xs font-bold">Tap to clear</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Android-style Passcode Lock Screen -->
+  <div id="lockScreen" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto">
+    <div class="w-full max-w-[340px] bg-slate-900 border border-white/10 rounded-3xl p-5 text-center text-white shadow-2xl space-y-3.5 my-auto">
+      <div class="space-y-1">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+          <i data-lucide="lock" class="w-5 h-5"></i>
+        </div>
+        <h2 class="text-base font-extrabold tracking-tight">PocketBudget Locked</h2>
+        <p id="lockSubtitle" class="text-xs text-slate-400">Enter your 4-digit passcode</p>
+      </div>
+
+      <!-- 4 PIN Dots -->
+      <div id="pinDots" class="flex items-center justify-center gap-3.5 py-0.5">
+        <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500 transition-all"></span>
+        <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500 transition-all"></span>
+        <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500 transition-all"></span>
+        <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500 transition-all"></span>
+      </div>
+
+      <p id="pinErrorMsg" class="hidden text-xs font-semibold text-rose-400">Incorrect passcode. Try again.</p>
+      <p id="defaultPinHint" class="text-[11px] text-emerald-300/90 bg-emerald-500/10 rounded-xl py-1.5 px-3">Default PIN: <strong>1234</strong> · Change in Settings</p>
+
+      <!-- Numeric Keypad -->
+      <div class="grid grid-cols-3 gap-2 pt-0.5">
+        <button type="button" data-pin-key="1" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">1</button>
+        <button type="button" data-pin-key="2" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">2</button>
+        <button type="button" data-pin-key="3" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">3</button>
+        <button type="button" data-pin-key="4" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">4</button>
+        <button type="button" data-pin-key="5" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">5</button>
+        <button type="button" data-pin-key="6" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">6</button>
+        <button type="button" data-pin-key="7" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">7</button>
+        <button type="button" data-pin-key="8" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">8</button>
+        <button type="button" data-pin-key="9" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">9</button>
+        <button type="button" id="pinClearBtn" class="ripple-btn py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-300">Clear</button>
+        <button type="button" data-pin-key="0" class="pin-key ripple-btn py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-base font-bold">0</button>
+        <button type="button" id="pinBackBtn" class="ripple-btn py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Backspace">
+          <i data-lucide="delete" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg"></div>
+
+  <script>
+    const STORAGE_KEY = 'pocket_budget_v1';
+    const BACKUP_STORAGE_KEY = 'pocket_budget_backup_v1';
+    const TODAY_YM = '2026-11';
+    const CURRENCIES = {
+      INR: { symbol: '₹', locale: 'en-IN' },
+      USD: { symbol: '$', locale: 'en-US' },
+      EUR: { symbol: '€', locale: 'de-DE' },
+      GBP: { symbol: '£', locale: 'en-GB' }
+    };
+
+    const CATEGORY_META = {
+      salary: { label: 'Salary', sign: 1, badge: 'bg-emerald-100 text-emerald-700', icon: 'banknote', amountClass: 'text-emerald-600' },
+      credited: { label: 'Amount Credited', sign: 1, badge: 'bg-teal-100 text-teal-700', icon: 'landmark', amountClass: 'text-teal-600' },
+      expenses: { label: 'Expenses', sign: -1, badge: 'bg-rose-100 text-rose-700', icon: 'shopping-bag', amountClass: 'text-rose-600' },
+      creditcard: { label: 'Credit Card', sign: -1, badge: 'bg-indigo-100 text-indigo-700', icon: 'credit-card', amountClass: 'text-indigo-700' },
+      misc: { label: 'Miscellaneous', sign: -1, badge: 'bg-violet-100 text-violet-700', icon: 'receipt', amountClass: 'text-violet-700' },
+      gifts: { label: 'Gifts', sign: -1, badge: 'bg-amber-100 text-amber-700', icon: 'gift', amountClass: 'text-amber-700' },
+      savings: { label: 'Savings', sign: -1, badge: 'bg-sky-100 text-sky-700', icon: 'piggy-bank', amountClass: 'text-sky-700' }
+    };
+
+    const WISE_QUOTES = [
+      "Pay your priorities first — clear Mom's Gift and KSFE Savings right after salary arrives, and pause 24 hours before impulse buys.",
+      "Every rupee you don't spend impulsively today grows your Grand Total cushion for next month.",
+      "Keep fixed expenses lean so your KSFE Savings and family gifts stay stress-free every month.",
+      "Small daily leaks add up fast — review your Entries tab once a week to catch unplanned spending early.",
+      "Saving first and spending what's left beats spending first and hoping something is left."
+    ];
+
+    const DEFAULT_CHECKLIST_ITEMS = [
+      { id: 'chk_mom_gift', title: "Mom's Gift", category: 'gifts', defaultAmount: 0, matchKey: 'mom', core: true },
+      { id: 'chk_ksfe', title: 'KSFE Savings', category: 'savings', defaultAmount: 0, matchKey: 'ksfe', core: true },
+      { id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true }
+    ];
+
+    const DEFAULT_STATE = {
+      currency: 'INR',
+      selectedMonth: '2026-11',
+      autoCarryover: true,
+      isSample: false,
+      passcodeEnabled: true,
+      passcode: '1234',
+      checklistItems: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS)),
+      checklistDone: {},
+      entries: []
+    };
+
+    let state = loadState();
+    let activeTab = 'overview';
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let modalCategory = 'salary';
+    let monthChartInstance = null;
+    let trendChartInstance = null;
+    let resetArmed = false;
+    let quoteIndex = 0;
+
+    function normalizeState(parsed) {
+      return {
+        currency: parsed.currency || 'INR',
+        selectedMonth: parsed.selectedMonth || TODAY_YM,
+        autoCarryover: parsed.autoCarryover !== false,
+        isSample: Boolean(parsed.isSample),
+        passcodeEnabled: parsed.passcodeEnabled !== false,
+        passcode: typeof parsed.passcode === 'string' && /^\d{4}$/.test(parsed.passcode) ? parsed.passcode : '1234',
+        checklistItems: (() => {
+          const base = Array.isArray(parsed.checklistItems) && parsed.checklistItems.length
+            ? parsed.checklistItems.slice()
+            : JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+          if (!base.some(it => it.id === 'chk_credit_card')) {
+            base.push({ id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true });
+          }
+          return base;
+        })(),
+        checklistDone: parsed.checklistDone && typeof parsed.checklistDone === 'object'
+          ? parsed.checklistDone
+          : {},
+        entries: parsed.entries
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(BACKUP_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.entries) && !parsed.isSample) {
+            return normalizeState(parsed);
+          }
+        }
+      } catch (e) {}
+      if (window.__EMBEDDED_BUDGET_STATE__ && Array.isArray(window.__EMBEDDED_BUDGET_STATE__.entries)) {
+        return normalizeState(window.__EMBEDDED_BUDGET_STATE__);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+
+    function saveState() {
+      try {
+        const serialized = JSON.stringify(state);
+        localStorage.setItem(STORAGE_KEY, serialized);
+        localStorage.setItem(BACKUP_STORAGE_KEY, serialized);
+      } catch (e) {}
+    }
+
+    function formatMoney(amount, withSign = false) {
+      const cfg = CURRENCIES[state.currency] || CURRENCIES.INR;
+      const absVal = Math.abs(Number(amount) || 0);
+      const formatted = absVal.toLocaleString(cfg.locale, { maximumFractionDigits: 2 });
+      if (amount < 0) return '-' + cfg.symbol + formatted;
+      if (withSign && amount > 0) return '+' + cfg.symbol + formatted;
+      return cfg.symbol + formatted;
+    }
+
+    function formatMonthLabel(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const d = new Date(y, m - 1, 1);
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    function formatShortMonth(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const d = new Date(y, m - 1, 1);
+      return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    }
+
+    function formatDateBadge(entry) {
+      if (entry.date) {
+        const parts = entry.date.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+      return formatMonthLabel(entry.month);
+    }
+
+    function shiftMonth(ym, delta) {
+      const [y, m] = ym.split('-').map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      const ny = d.getFullYear();
+      const nm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${ny}-${nm}`;
+    }
+
+    function computeAllMonthsLedger() {
+      const ymRe = /^\d{4}-\d{2}$/;
+      const monthSet = new Set(state.entries.map(e => e.month).filter(m => ymRe.test(m)));
+      if (!ymRe.test(state.selectedMonth)) state.selectedMonth = TODAY_YM;
+      monthSet.add(state.selectedMonth);
+      const sortedMonths = Array.from(monthSet).sort();
+
+      if (sortedMonths.length >= 2) {
+        const first = sortedMonths[0];
+        const last = sortedMonths[sortedMonths.length - 1];
+        let cur = first;
+        let guard = 0;
+        while (cur <= last && guard < 120) {
+          monthSet.add(cur);
+          const next = shiftMonth(cur, 1);
+          if (next === cur || !ymRe.test(next)) break;
+          cur = next;
+          guard++;
+        }
+      }
+
+      const months = Array.from(monthSet).sort();
+      let runningBalance = 0;
+      let cumulativeSavings = 0;
+      const ledger = {};
+
+      for (const ym of months) {
+        const items = state.entries.filter(e => e.month === ym);
+        const sums = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0 };
+        const counts = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0 };
+
+        for (const item of items) {
+          if (sums[item.category] !== undefined) {
+            sums[item.category] += Number(item.amount) || 0;
+            counts[item.category] += 1;
+          }
+        }
+
+        const totalInflow = sums.salary + sums.credited;
+        const monthNet = totalInflow - sums.expenses - sums.creditcard - sums.misc - sums.gifts - sums.savings;
+        const opening = state.autoCarryover ? runningBalance : 0;
+        const grandTotal = opening + monthNet;
+
+        runningBalance = grandTotal;
+        cumulativeSavings += sums.savings;
+
+        ledger[ym] = {
+          ym,
+          sums,
+          counts,
+          totalInflow,
+          monthNet,
+          opening,
+          grandTotal,
+          cumulativeSavings,
+          items: items.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt)
+        };
+      }
+
+      return { months, ledger, cumulativeSavings };
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => el.classList.add('hidden'), 2400);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[s]));
+    }
+
+    function renderEntryRow(item) {
+      const meta = CATEGORY_META[item.category] || CATEGORY_META.expenses;
+      const signed = meta.sign * (Number(item.amount) || 0);
+      return `
+        <div class="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-2xl ${meta.badge} flex items-center justify-center shrink-0">
+              <i data-lucide="${meta.icon}" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[13px] font-bold text-slate-900 truncate">${escapeHtml(item.note || meta.label)}</div>
+              <div class="text-[11px] font-medium text-slate-500 truncate">${meta.label} · ${formatDateBadge(item)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <span class="text-[13px] font-extrabold ${meta.amountClass} mr-0.5">${formatMoney(signed, true)}</span>
+            <button data-edit-id="${item.id}" class="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500" aria-label="Edit entry">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
+            <button data-delete-id="${item.id}" class="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600" aria-label="Delete entry">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChart(currentData) {
+      if (typeof Chart === 'undefined') return;
+      const canvas = document.getElementById('monthChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const remaining = Math.max(0, currentData.monthNet);
+      const dataValues = [
+        currentData.sums.expenses,
+        currentData.sums.creditcard,
+        currentData.sums.misc,
+        currentData.sums.gifts,
+        currentData.sums.savings,
+        remaining
+      ];
+      const total = dataValues.reduce((a, b) => a + b, 0);
+
+      document.getElementById('chartSubtitle').textContent =
+        currentData.totalInflow > 0
+          ? `Inflow: ${formatMoney(currentData.totalInflow)}`
+          : 'Add salary or credit to see split';
+
+      if (monthChartInstance) {
+        monthChartInstance.destroy();
+      }
+
+      monthChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Expenses', 'Credit Card', 'Misc', 'Gifts', 'Savings', 'Remaining'],
+          datasets: [{
+            data: total > 0 ? dataValues : [1],
+            backgroundColor: total > 0
+              ? ['#f43f5e', '#6366f1', '#8b5cf6', '#f59e0b', '#0ea5e9', '#10b981']
+              : ['#e2e8f0'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 10,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: { family: 'Inter', size: 11, weight: '600' },
+                color: '#334155'
+              }
+            },
+            tooltip: {
+              enabled: total > 0,
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatMoney(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTrendChart(months, ledger) {
+      if (typeof Chart === 'undefined') return;
+      const canvas = document.getElementById('trendChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const slice = months.slice(-6);
+      const labels = slice.map(formatShortMonth);
+      const grandTotals = slice.map(ym => ledger[ym].grandTotal);
+      const outflows = slice.map(ym => ledger[ym].sums.expenses + ledger[ym].sums.creditcard + ledger[ym].sums.misc + ledger[ym].sums.gifts);
+
+      if (trendChartInstance) {
+        trendChartInstance.destroy();
+      }
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Grand Total',
+              data: grandTotals,
+              backgroundColor: '#10b981',
+              borderRadius: 6
+            },
+            {
+              label: 'Total Outflows',
+              data: outflows,
+              backgroundColor: '#f43f5e',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                boxWidth: 10,
+                usePointStyle: true,
+                font: { family: 'Inter', size: 11, weight: '600' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${formatMoney(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 } } },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                font: { family: 'Inter', size: 10 },
+                callback: (v) => formatMoney(v)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function render() {
+      document.getElementById('currencySelect').value = state.currency;
+      document.getElementById('autoCarryToggle').checked = state.autoCarryover;
+      document.getElementById('currentMonthLabel').textContent = formatMonthLabel(state.selectedMonth);
+      document.getElementById('sampleBanner').classList.toggle('hidden', !state.isSample);
+
+      const { months, ledger, cumulativeSavings } = computeAllMonthsLedger();
+      const current = ledger[state.selectedMonth];
+
+      // Hero Card
+      document.getElementById('grandTotalValue').textContent = formatMoney(current.grandTotal);
+      document.getElementById('openingBalanceValue').textContent = formatMoney(current.opening);
+      document.getElementById('heroSalaryValue').textContent = formatMoney(current.sums.salary);
+      document.getElementById('passcodeEnabledToggle').checked = state.passcodeEnabled !== false;
+      const netEl = document.getElementById('monthNetValue');
+      netEl.textContent = formatMoney(current.monthNet, true);
+      netEl.className = `text-xs font-bold mt-0.5 ${current.monthNet >= 0 ? 'text-emerald-300' : 'text-rose-300'}`;
+      document.getElementById('cumulativeSavingsValue').textContent = formatMoney(current.cumulativeSavings);
+
+      // Next month rollover button label
+      const nextYm = shiftMonth(state.selectedMonth, 1);
+      const nextShort = new Date(Number(nextYm.split('-')[0]), Number(nextYm.split('-')[1]) - 1, 1)
+        .toLocaleDateString('en-US', { month: 'short' });
+      document.getElementById('rolloverBtn').innerHTML = `<span>Carry to ${nextShort}</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
+
+      // Copy Last Month's Salary Bar
+      const prevYm = shiftMonth(state.selectedMonth, -1);
+      const prevSalary = ledger[prevYm] ? ledger[prevYm].sums.salary : 0;
+      const copyBar = document.getElementById('copySalaryBar');
+      if (current.sums.salary === 0 && prevSalary > 0) {
+        copyBar.classList.remove('hidden');
+        document.getElementById('copySalaryText').textContent = `Copy ${formatMoney(prevSalary)} salary from ${formatShortMonth(prevYm)}?`;
+      } else {
+        copyBar.classList.add('hidden');
+      }
+
+      // Income Allocation Progress Bar
+      const inflow = current.totalInflow;
+      const totalAllocated = current.sums.expenses + current.sums.creditcard + current.sums.misc + current.sums.gifts + current.sums.savings;
+      if (inflow > 0) {
+        const pctExp = Math.min(100, (current.sums.expenses / inflow) * 100);
+        const pctCard = Math.min(100 - pctExp, (current.sums.creditcard / inflow) * 100);
+        const pctMisc = Math.min(100 - pctExp - pctCard, (current.sums.misc / inflow) * 100);
+        const pctGifts = Math.min(100 - pctExp - pctCard - pctMisc, (current.sums.gifts / inflow) * 100);
+        const pctSav = Math.min(100 - pctExp - pctCard - pctMisc - pctGifts, (current.sums.savings / inflow) * 100);
+        const totalPct = Math.round((totalAllocated / inflow) * 100);
+        document.getElementById('barExpenses').style.width = `${pctExp}%`;
+        document.getElementById('barCreditCard').style.width = `${pctCard}%`;
+        document.getElementById('barMisc').style.width = `${pctMisc}%`;
+        document.getElementById('barGifts').style.width = `${pctGifts}%`;
+        document.getElementById('barSavings').style.width = `${pctSav}%`;
+        document.getElementById('salaryUsageLabel').textContent = `${totalPct}% allocated`;
+        document.getElementById('salaryLeftLabel').textContent = current.monthNet >= 0
+          ? `${formatMoney(current.monthNet)} left`
+          : `${formatMoney(Math.abs(current.monthNet))} over income`;
+      } else {
+        document.getElementById('barExpenses').style.width = '0%';
+        document.getElementById('barCreditCard').style.width = '0%';
+        document.getElementById('barMisc').style.width = '0%';
+        document.getElementById('barGifts').style.width = '0%';
+        document.getElementById('barSavings').style.width = '0%';
+        document.getElementById('salaryUsageLabel').textContent = 'No income yet';
+        document.getElementById('salaryLeftLabel').textContent = totalAllocated > 0 ? `${formatMoney(totalAllocated)} spent` : '';
+      }
+
+      // Category Cards
+      for (const cat of ['salary', 'credited', 'expenses', 'creditcard', 'misc', 'gifts', 'savings']) {
+        document.getElementById(`catTotal-${cat}`).textContent = formatMoney(current.sums[cat]);
+        const cnt = current.counts[cat];
+        document.getElementById(`catCount-${cat}`).textContent = `${cnt} ${cnt === 1 ? 'entry' : 'entries'}`;
+      }
+
+      // Recent Entries (Overview)
+      const recentEl = document.getElementById('recentEntriesList');
+      if (current.items.length === 0) {
+        recentEl.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">No entries for ${formatMonthLabel(state.selectedMonth)} yet. Tap + or a category card above to add.</div>`;
+      } else {
+        recentEl.innerHTML = current.items.slice(0, 4).map(item => renderEntryRow(item)).join('');
+      }
+
+      // Full Entries (Tab 2)
+      const q = searchQuery.trim().toLowerCase();
+      const filtered = current.items.filter(i => {
+        const matchCat = activeFilter === 'all' || i.category === activeFilter;
+        const matchSearch = !q || (i.note || '').toLowerCase().includes(q) || String(i.amount).includes(q) || CATEGORY_META[i.category].label.toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      });
+      const fullEl = document.getElementById('fullEntriesList');
+      if (filtered.length === 0) {
+        fullEl.innerHTML = `<div class="bg-white rounded-3xl p-8 text-center text-xs text-slate-400 border border-slate-200/80">No matching entries in ${formatMonthLabel(state.selectedMonth)}.</div>`;
+      } else {
+        fullEl.innerHTML = filtered.map(item => renderEntryRow(item)).join('');
+      }
+
+      // All Months Ledger (Tab 3)
+      const latestYm = months[months.length - 1];
+      document.getElementById('overallGrandTotalValue').textContent = formatMoney(ledger[latestYm].grandTotal);
+      document.getElementById('overallSavingsValue').textContent = formatMoney(cumulativeSavings);
+
+      const ledgerEl = document.getElementById('monthsLedgerList');
+      ledgerEl.innerHTML = months.slice().reverse().map(ym => {
+        const m = ledger[ym];
+        const isSelected = ym === state.selectedMonth;
+        return `
+          <button data-jump-month="${ym}" class="ripple-btn w-full text-left bg-white rounded-3xl p-4 border ${isSelected ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80'} shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-900">${formatMonthLabel(ym)}</span>
+                ${isSelected ? '<span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Selected</span>' : ''}
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-semibold text-slate-400 uppercase">Grand Total</div>
+                <div class="text-sm font-extrabold ${m.grandTotal >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${formatMoney(m.grandTotal)}</div>
+              </div>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-2 text-[11px] bg-slate-50 rounded-2xl p-2.5">
+              <div><span class="text-slate-400 block">Salary</span><span class="font-bold text-emerald-700">${formatMoney(m.sums.salary)}</span></div>
+              <div><span class="text-slate-400 block">Credited</span><span class="font-bold text-teal-700">${formatMoney(m.sums.credited)}</span></div>
+              <div><span class="text-slate-400 block">Expenses</span><span class="font-bold text-rose-600">${formatMoney(m.sums.expenses)}</span></div>
+              <div><span class="text-slate-400 block">Credit Card</span><span class="font-bold text-indigo-700">${formatMoney(m.sums.creditcard)}</span></div>
+              <div><span class="text-slate-400 block">Misc</span><span class="font-bold text-violet-700">${formatMoney(m.sums.misc)}</span></div>
+              <div><span class="text-slate-400 block">Gifts</span><span class="font-bold text-amber-700">${formatMoney(m.sums.gifts)}</span></div>
+              <div class="col-span-3 pt-1.5 border-t border-slate-200/70 flex items-center justify-between"><span class="text-slate-500 font-medium">Savings</span><span class="font-bold text-sky-700">${formatMoney(m.sums.savings)}</span></div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Prev. Carried In: <strong>${formatMoney(m.opening)}</strong></span>
+              <span>Month Net: <strong class="${m.monthNet >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${formatMoney(m.monthNet, true)}</strong></span>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      renderChecklist(current);
+      renderInsights(current, ledger);
+      renderChart(current);
+      renderTrendChart(months, ledger);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function isChecklistItemCleared(item, ym, monthEntries) {
+      const manualMap = state.checklistDone[ym] || {};
+      if (manualMap[item.id] === true) return { cleared: true, via: 'manual' };
+      if (manualMap[item.id] === false) return { cleared: false, via: 'manual' };
+      const key = (item.matchKey || item.title || '').toLowerCase();
+      if (key) {
+        const matched = monthEntries.find(e =>
+          (!item.category || e.category === item.category) &&
+          (e.note || '').toLowerCase().includes(key)
+        );
+        if (matched) return { cleared: true, via: 'entry', entry: matched };
+      }
+      return { cleared: false, via: 'none' };
+    }
+
+    function renderChecklist(current) {
+      const ym = state.selectedMonth;
+      document.getElementById('wiseMoneyQuote').textContent = WISE_QUOTES[quoteIndex % WISE_QUOTES.length];
+      document.getElementById('checklistMonthSubtitle').textContent = formatMonthLabel(ym);
+
+      const items = state.checklistItems || DEFAULT_CHECKLIST_ITEMS;
+      let clearedCount = 0;
+
+      const html = items.map(item => {
+        const status = isChecklistItemCleared(item, ym, current.items);
+        if (status.cleared) clearedCount++;
+        const meta = CATEGORY_META[item.category] || CATEGORY_META.expenses;
+        return `
+          <div class="p-3 rounded-2xl border ${status.cleared ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200/80'} flex items-center justify-between gap-2.5">
+            <div class="flex items-center gap-3 min-w-0">
+              <button data-toggle-check="${item.id}" class="ripple-btn w-6 h-6 rounded-lg flex items-center justify-center border-2 shrink-0 ${status.cleared ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-300 text-transparent'}" aria-label="Toggle ${escapeHtml(item.title)}">
+                <i data-lucide="check" class="w-4 h-4"></i>
+              </button>
+              <div class="min-w-0">
+                <div class="text-sm font-bold ${status.cleared ? 'line-through text-slate-500' : 'text-slate-900'} truncate">${escapeHtml(item.title)}</div>
+                <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span class="font-semibold">${meta.label}</span>
+                  ${item.defaultAmount > 0 ? `<span>· Target ${formatMoney(item.defaultAmount)}</span>` : ''}
+                  ${status.cleared ? '<span class="text-emerald-700 font-bold">· Cleared</span>' : '<span class="text-amber-600 font-semibold">· Pending</span>'}
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${!status.cleared ? `<button data-pay-check="${item.id}" class="ripple-btn px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold">Pay & Log</button>` : ''}
+              ${!item.core ? `<button data-del-check="${item.id}" class="p-1.5 rounded-xl hover:bg-rose-100 text-slate-400 hover:text-rose-600" aria-label="Remove item"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('monthlyChecklistItems').innerHTML = html;
+      const pct = items.length ? Math.round((clearedCount / items.length) * 100) : 0;
+      document.getElementById('checklistProgressBadge').textContent = `${clearedCount} / ${items.length} cleared`;
+      document.getElementById('checklistProgressBar').style.width = `${pct}%`;
+    }
+
+    function renderInsights(current, ledger) {
+      const ym = state.selectedMonth;
+      const prevYm = shiftMonth(ym, -1);
+      const prev = ledger[prevYm];
+      document.getElementById('insightsMonthTitle').textContent = `${formatMonthLabel(ym)} Review`;
+
+      const salary = current.totalInflow;
+      const spent = current.sums.expenses + current.sums.creditcard + current.sums.misc + current.sums.gifts;
+      const savings = current.sums.savings;
+      const savingsRate = salary > 0 ? Math.round((savings / salary) * 100) : 0;
+      const spendRate = salary > 0 ? Math.round((spent / salary) * 100) : 0;
+
+      const items = state.checklistItems || DEFAULT_CHECKLIST_ITEMS;
+      const clearedCount = items.filter(it => isChecklistItemCleared(it, ym, current.items).cleared).length;
+
+      document.getElementById('insightSavingsRate').textContent = `${savingsRate}%`;
+      document.getElementById('insightSpendRate').textContent = `${spendRate}%`;
+      document.getElementById('insightChecklistRate').textContent = `${clearedCount}/${items.length}`;
+
+      const goods = [];
+      const improves = [];
+
+      if (salary === 0 && current.items.length === 0) {
+        goods.push('You have a clean slate for this month — a great time to plan your salary split before spending.');
+        improves.push('Add your monthly Salary first so PocketBudget can calculate your savings rate and spending ratio.');
+      } else {
+        // Positive feedback
+        if (savingsRate >= 20) {
+          goods.push(`Strong saving habit: you set aside ${savingsRate}% of your salary (${formatMoney(savings)}) this month.`);
+        } else if (savings > 0) {
+          goods.push(`You saved ${formatMoney(savings)} this month — keeping the savings streak alive.`);
+        }
+        if (current.monthNet > 0) {
+          goods.push(`You stayed under your salary with ${formatMoney(current.monthNet)} surplus ready to roll into next month.`);
+        }
+        if (current.grandTotal > 0) {
+          goods.push(`Your running Grand Total cushion stands at ${formatMoney(current.grandTotal)}, giving you breathing room.`);
+        }
+        if (clearedCount === items.length && items.length > 0) {
+          goods.push(`All ${items.length} monthly checklist commitments (including Mom's Gift & KSFE Savings) are cleared!`);
+        }
+        if (prev && prev.sums.expenses > 0 && current.sums.expenses > 0 && current.sums.expenses < prev.sums.expenses) {
+          const drop = prev.sums.expenses - current.sums.expenses;
+          goods.push(`Expenses are down by ${formatMoney(drop)} compared to ${formatShortMonth(prevYm)}.`);
+        }
+
+        // Suggestions to improve
+        const pendingCore = items.filter(it => !isChecklistItemCleared(it, ym, current.items).cleared);
+        if (pendingCore.length > 0) {
+          const names = pendingCore.map(p => p.title).join(' & ');
+          improves.push(`Still pending this month: ${names}. Clear them from the Checklist tab before discretionary spending.`);
+        }
+        if (salary > 0 && spendRate > 60) {
+          improves.push(`Expenses + Gifts took ${spendRate}% of your salary. Aim to keep combined outflows under 55–60% so more rolls into your Grand Total.`);
+        }
+        if (salary > 0 && savingsRate < 20) {
+          const target = Math.round(salary * 0.2);
+          improves.push(`Try lifting your Savings (including KSFE) toward 20% of salary (~${formatMoney(target)}/month).`);
+        }
+        if (salary > 0 && current.sums.creditcard > salary * 0.25) {
+          improves.push(`Credit Card spending is ${Math.round((current.sums.creditcard / salary) * 100)}% of your income this month. Keep card bills under 20–25% so you can clear them in full.`);
+        }
+        if (salary > 0 && current.sums.gifts > salary * 0.12) {
+          improves.push(`Gifts are ${Math.round((current.sums.gifts / salary) * 100)}% of your income this month. Setting a monthly cap helps protect your cushion.`);
+        }
+        if (current.monthNet < 0) {
+          improves.push(`You are ${formatMoney(Math.abs(current.monthNet))} over this month's salary. Pause non-essential purchases so next month's carryover doesn't dip.`);
+        }
+        if (prev && prev.sums.expenses > 0 && current.sums.expenses > prev.sums.expenses * 1.15) {
+          const diff = current.sums.expenses - prev.sums.expenses;
+          improves.push(`Expenses rose by ${formatMoney(diff)} vs ${formatShortMonth(prevYm)}. Check the Entries tab to spot any one-off spikes.`);
+        }
+      }
+
+      if (goods.length === 0) {
+        goods.push('Tracking every expense in one place is already the best first step toward smarter spending.');
+      }
+      if (improves.length === 0) {
+        improves.push('Your numbers look well balanced this month! Consider moving part of your leftover surplus into extra KSFE Savings.');
+      }
+
+      // Health Badge
+      const badge = document.getElementById('healthBadge');
+      if (salary === 0) {
+        badge.textContent = 'Set Salary';
+        badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700';
+      } else if (current.monthNet < 0) {
+        badge.textContent = 'Over Budget';
+        badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800';
+      } else if (savingsRate >= 20 && spendRate <= 60) {
+        badge.textContent = 'Great Balance';
+        badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800';
+      } else {
+        badge.textContent = 'On Track';
+        badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800';
+      }
+
+      document.getElementById('goodHabitsList').innerHTML = goods.map(g => `
+        <div class="flex items-start gap-2 text-xs text-slate-700 bg-emerald-50/60 rounded-2xl p-2.5">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+          <span class="leading-relaxed">${escapeHtml(g)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('improveTipsList').innerHTML = improves.map(t => `
+        <div class="flex items-start gap-2 text-xs text-slate-700 bg-amber-50/60 rounded-2xl p-2.5">
+          <i data-lucide="arrow-up-right" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+          <span class="leading-relaxed">${escapeHtml(t)}</span>
+        </div>
+      `).join('');
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      ['overview', 'entries', 'months', 'checklist', 'insights'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+      });
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isCurrent = btn.dataset.tab === tab;
+        btn.className = `nav-btn ripple-btn flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-2xl ${isCurrent ? 'text-emerald-700 bg-emerald-50 font-bold' : 'text-slate-500 font-semibold'}`;
+      });
+    }
+
+    function setModalCategory(cat) {
+      modalCategory = cat;
+      document.querySelectorAll('.cat-pick-btn').forEach(btn => {
+        const active = btn.dataset.catPick === cat;
+        const span = btn.dataset.catPick === 'savings' ? ' col-span-3' : '';
+        btn.className = active
+          ? `cat-pick-btn${span} py-2 px-1 rounded-2xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800`
+          : `cat-pick-btn${span} py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600`;
+      });
+    }
+
+    function openModal(category = 'salary', existingEntry = null) {
+      const modal = document.getElementById('entryModal');
+      document.getElementById('editEntryId').value = existingEntry ? existingEntry.id : '';
+      document.getElementById('modalTitle').textContent = existingEntry ? 'Edit Entry' : 'Add Budget Entry';
+      setModalCategory(existingEntry ? existingEntry.category : category);
+      document.getElementById('entryAmount').value = existingEntry ? existingEntry.amount : '';
+      const defaultDate = existingEntry && existingEntry.date
+        ? existingEntry.date
+        : (state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`);
+      document.getElementById('entryDate').value = defaultDate;
+      document.getElementById('entryNote').value = existingEntry ? (existingEntry.note || '') : '';
+      modal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('entryAmount').focus(), 50);
+    }
+
+    function closeModal() {
+      delete document.getElementById('entryForm').dataset.pendingCheckId;
+      document.getElementById('entryModal').classList.add('hidden');
+    }
+
+    // Event Listeners
+    document.getElementById('currencySelect').addEventListener('change', (e) => {
+      state.currency = e.target.value;
+      saveState();
+      render();
+    });
+
+    document.getElementById('autoCarryToggle').addEventListener('change', (e) => {
+      state.autoCarryover = e.target.checked;
+      saveState();
+      render();
+      showToast(state.autoCarryover ? 'Auto-carryover enabled' : 'Auto-carryover paused');
+    });
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      state.selectedMonth = shiftMonth(state.selectedMonth, -1);
+      saveState();
+      render();
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      state.selectedMonth = shiftMonth(state.selectedMonth, 1);
+      saveState();
+      render();
+    });
+
+    document.getElementById('jumpTodayBtn').addEventListener('click', () => {
+      state.selectedMonth = TODAY_YM;
+      saveState();
+      render();
+      showToast('Jumped to current month');
+    });
+
+    document.getElementById('rolloverBtn').addEventListener('click', () => {
+      const { ledger } = computeAllMonthsLedger();
+      const current = ledger[state.selectedMonth];
+      state.autoCarryover = true;
+      state.selectedMonth = shiftMonth(state.selectedMonth, 1);
+      saveState();
+      render();
+      showToast(`Carried ${formatMoney(current.grandTotal)} into ${formatMonthLabel(state.selectedMonth)}`);
+    });
+
+    document.getElementById('copySalaryBtn').addEventListener('click', () => {
+      const prevYm = shiftMonth(state.selectedMonth, -1);
+      const { ledger } = computeAllMonthsLedger();
+      const prevSalary = ledger[prevYm] ? ledger[prevYm].sums.salary : 0;
+      if (prevSalary > 0) {
+        state.entries.push({
+          id: 'e_' + Date.now(),
+          category: 'salary',
+          amount: prevSalary,
+          month: state.selectedMonth,
+          date: `${state.selectedMonth}-01`,
+          note: 'Monthly Salary',
+          createdAt: Date.now()
+        });
+        state.isSample = false;
+        saveState();
+        render();
+        showToast(`Copied ${formatMoney(prevSalary)} salary`);
+      }
+    });
+
+    document.getElementById('clearSampleBtn').addEventListener('click', () => {
+      state.entries = [];
+      state.isSample = false;
+      saveState();
+      render();
+      showToast('Cleared demo data. Ready for your budget!');
+    });
+
+    document.querySelectorAll('[data-quick-cat]').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.quickCat));
+    });
+
+    document.querySelectorAll('.quick-amt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('entryAmount');
+        const cur = parseFloat(input.value) || 0;
+        input.value = cur + Number(btn.dataset.addAmt);
+      });
+    });
+
+    document.getElementById('openAddModalBtn').addEventListener('click', () => openModal('salary'));
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    document.getElementById('viewAllEntriesBtn').addEventListener('click', () => switchTab('entries'));
+
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      resetArmed = false;
+      document.getElementById('resetConfirmHint').textContent = 'Tap to clear';
+      document.getElementById('settingsModal').classList.remove('hidden');
+    });
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('hidden');
+    });
+
+    document.querySelectorAll('.cat-pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => setModalCategory(btn.dataset.catPick));
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById('entriesSearchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      render();
+    });
+
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-chip').forEach(c => {
+          const active = c.dataset.filter === activeFilter;
+          c.className = active
+            ? 'filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white shrink-0'
+            : 'filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0';
+        });
+        render();
+      });
+    });
+
+    document.getElementById('entryForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('entryAmount').value);
+      const dateVal = document.getElementById('entryDate').value;
+      const month = dateVal ? dateVal.slice(0, 7) : state.selectedMonth;
+      const note = document.getElementById('entryNote').value.trim();
+      const editId = document.getElementById('editEntryId').value;
+
+      if (!dateVal || isNaN(amount) || amount <= 0) {
+        showToast('Please enter a valid positive amount');
+        return;
+      }
+
+      if (editId) {
+        const idx = state.entries.findIndex(item => item.id === editId);
+        if (idx !== -1) {
+          state.entries[idx] = { ...state.entries[idx], category: modalCategory, amount, month, date: dateVal, note };
+        }
+        showToast('Entry updated');
+      } else {
+        state.entries.push({
+          id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          category: modalCategory,
+          amount,
+          month,
+          date: dateVal,
+          note,
+          createdAt: Date.now()
+        });
+        state.isSample = false;
+        showToast(`${CATEGORY_META[modalCategory].label} added`);
+      }
+
+      const pendingChkId = document.getElementById('entryForm').dataset.pendingCheckId;
+      if (pendingChkId) {
+        if (!state.checklistDone[month]) state.checklistDone[month] = {};
+        state.checklistDone[month][pendingChkId] = true;
+        delete document.getElementById('entryForm').dataset.pendingCheckId;
+      }
+      state.selectedMonth = month;
+      saveState();
+      closeModal();
+      render();
+    });
+
+    document.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-edit-id]');
+      if (editBtn) {
+        const item = state.entries.find(x => x.id === editBtn.dataset.editId);
+        if (item) openModal(item.category, item);
+        return;
+      }
+      const delBtn = e.target.closest('[data-delete-id]');
+      if (delBtn) {
+        state.entries = state.entries.filter(x => x.id !== delBtn.dataset.deleteId);
+        saveState();
+        render();
+        showToast('Entry deleted');
+        return;
+      }
+      const jumpBtn = e.target.closest('[data-jump-month]');
+      if (jumpBtn) {
+        state.selectedMonth = jumpBtn.dataset.jumpMonth;
+        saveState();
+        switchTab('overview');
+        render();
+        return;
+      }
+      const toggleChk = e.target.closest('[data-toggle-check]');
+      if (toggleChk) {
+        const id = toggleChk.dataset.toggleCheck;
+        const ym = state.selectedMonth;
+        if (!state.checklistDone[ym]) state.checklistDone[ym] = {};
+        const { ledger } = computeAllMonthsLedger();
+        const item = (state.checklistItems || DEFAULT_CHECKLIST_ITEMS).find(x => x.id === id);
+        const curCleared = item ? isChecklistItemCleared(item, ym, ledger[ym].items).cleared : false;
+        state.checklistDone[ym][id] = !curCleared;
+        saveState();
+        render();
+        showToast(!curCleared ? `${item.title} marked cleared` : `${item.title} marked pending`);
+        return;
+      }
+      const payChk = e.target.closest('[data-pay-check]');
+      if (payChk) {
+        const id = payChk.dataset.payCheck;
+        const item = (state.checklistItems || DEFAULT_CHECKLIST_ITEMS).find(x => x.id === id);
+        if (item) {
+          openModal(item.category || 'expenses');
+          if (item.defaultAmount > 0) document.getElementById('entryAmount').value = item.defaultAmount;
+          document.getElementById('entryNote').value = item.title;
+          document.getElementById('entryForm').dataset.pendingCheckId = item.id;
+        }
+        return;
+      }
+      const delChk = e.target.closest('[data-del-check]');
+      if (delChk) {
+        const id = delChk.dataset.delCheck;
+        state.checklistItems = (state.checklistItems || []).filter(x => x.id !== id);
+        saveState();
+        render();
+        showToast('Checklist item removed');
+      }
+    });
+
+    document.getElementById('nextReminderBtn').addEventListener('click', () => {
+      quoteIndex = (quoteIndex + 1) % WISE_QUOTES.length;
+      document.getElementById('wiseMoneyQuote').textContent = WISE_QUOTES[quoteIndex];
+    });
+
+    document.getElementById('addChecklistForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('newCheckTitle').value.trim();
+      const amt = parseFloat(document.getElementById('newCheckAmount').value) || 0;
+      if (!title) {
+        showToast('Enter a checklist item name');
+        return;
+      }
+      if (!state.checklistItems) state.checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+      state.checklistItems.push({
+        id: 'chk_' + Date.now(),
+        title,
+        category: 'expenses',
+        defaultAmount: amt,
+        matchKey: title.toLowerCase(),
+        core: false
+      });
+      document.getElementById('newCheckTitle').value = '';
+      document.getElementById('newCheckAmount').value = '';
+      saveState();
+      render();
+      showToast(`Added "${title}" to monthly checklist`);
+    });
+
+    function saveFileLocally(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 2000);
+    }
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const rows = [['Date', 'Month', 'Category', 'Amount', 'Note']];
+      state.entries.slice().sort((a, b) => (a.date || a.month).localeCompare(b.date || b.month)).forEach(e => {
+        const label = (CATEGORY_META[e.category] || CATEGORY_META.expenses).label;
+        rows.push([e.date || e.month, e.month, label, e.amount, `"${(e.note || '').replace(/"/g, '""')}"`]);
+      });
+      const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+      saveFileLocally(`pocket-budget-${state.selectedMonth}.csv`, csv, 'text/csv;charset=utf-8;');
+      showToast('Saved CSV to device');
+    });
+
+    document.getElementById('backupJsonBtn').addEventListener('click', () => {
+      saveFileLocally(`pocket-budget-backup-${state.selectedMonth}.json`, JSON.stringify(state, null, 2), 'application/json;charset=utf-8;');
+      showToast('Saved JSON backup to device');
+    });
+
+    document.getElementById('restoreJsonInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && Array.isArray(parsed.entries)) {
+            state = {
+              currency: parsed.currency || 'INR',
+              selectedMonth: parsed.selectedMonth || TODAY_YM,
+              autoCarryover: parsed.autoCarryover !== false,
+              isSample: false,
+              entries: parsed.entries
+            };
+            saveState();
+            document.getElementById('settingsModal').classList.add('hidden');
+            render();
+            showToast('Backup restored');
+          } else {
+            showToast('Invalid backup file');
+          }
+        } catch (err) {
+          showToast('Could not read backup file');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    document.getElementById('resetAllBtn').addEventListener('click', () => {
+      if (!resetArmed) {
+        resetArmed = true;
+        document.getElementById('resetConfirmHint').textContent = 'Tap again to confirm';
+        return;
+      }
+      state.entries = [];
+      state.isSample = false;
+      resetArmed = false;
+      saveState();
+      document.getElementById('settingsModal').classList.add('hidden');
+      render();
+      showToast('All data cleared');
+    });
+
+    // Passcode Lock Screen Logic
+    let enteredPin = '';
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll('#pinDots .pin-dot');
+      dots.forEach((dot, idx) => {
+        if (idx < enteredPin.length) {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-emerald-400 scale-110 transition-all';
+        } else {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-500 transition-all';
+        }
+      });
+    }
+
+    function showLockScreen() {
+      enteredPin = '';
+      updatePinDots();
+      document.getElementById('pinErrorMsg').classList.add('hidden');
+      document.getElementById('defaultPinHint').classList.toggle('hidden', state.passcode !== '1234');
+      document.getElementById('lockScreen').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function unlockApp() {
+      enteredPin = '';
+      updatePinDots();
+      document.getElementById('lockScreen').classList.add('hidden');
+    }
+
+    function handlePinDigit(digit) {
+      if (enteredPin.length >= 4) return;
+      enteredPin += digit;
+      document.getElementById('pinErrorMsg').classList.add('hidden');
+      updatePinDots();
+      if (enteredPin.length === 4) {
+        if (enteredPin === state.passcode) {
+          setTimeout(() => {
+            unlockApp();
+            showToast('Unlocked');
+          }, 120);
+        } else {
+          setTimeout(() => {
+            enteredPin = '';
+            updatePinDots();
+            document.getElementById('pinErrorMsg').classList.remove('hidden');
+          }, 180);
+        }
+      }
+    }
+
+    document.querySelectorAll('.pin-key').forEach(btn => {
+      btn.addEventListener('click', () => handlePinDigit(btn.dataset.pinKey));
+    });
+
+    document.getElementById('pinClearBtn').addEventListener('click', () => {
+      enteredPin = '';
+      document.getElementById('pinErrorMsg').classList.add('hidden');
+      updatePinDots();
+    });
+
+    document.getElementById('pinBackBtn').addEventListener('click', () => {
+      enteredPin = enteredPin.slice(0, -1);
+      updatePinDots();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('lockScreen').classList.contains('hidden')) return;
+      if (/^[0-9]$/.test(e.key)) handlePinDigit(e.key);
+      if (e.key === 'Backspace') {
+        enteredPin = enteredPin.slice(0, -1);
+        updatePinDots();
+      }
+    });
+
+    document.getElementById('lockAppBtn').addEventListener('click', () => {
+      state.passcodeEnabled = true;
+      saveState();
+      showLockScreen();
+    });
+
+    document.getElementById('passcodeEnabledToggle').addEventListener('change', (e) => {
+      state.passcodeEnabled = e.target.checked;
+      saveState();
+      showToast(state.passcodeEnabled ? 'Passcode enabled' : 'Passcode disabled');
+    });
+
+    document.getElementById('changePinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('newPinInput').value.trim();
+      if (!/^\d{4}$/.test(val)) {
+        showToast('Enter exactly 4 digits');
+        return;
+      }
+      state.passcode = val;
+      state.passcodeEnabled = true;
+      saveState();
+      document.getElementById('newPinInput').value = '';
+      document.getElementById('passcodeEnabledToggle').checked = true;
+      showToast('Passcode updated');
+    });
+
+    document.getElementById('quickSaveBtn').addEventListener('click', () => {
+      saveState();
+      saveFileLocally(`pocket-budget-saved-${state.selectedMonth}.json`, JSON.stringify(state, null, 2), 'application/json;charset=utf-8;');
+      const lbl = document.getElementById('quickSaveLabel');
+      lbl.textContent = 'Saved ✓';
+      clearTimeout(lbl._t);
+      lbl._t = setTimeout(() => { lbl.textContent = 'Save'; }, 2000);
+      showToast('Saved locally & JSON downloaded');
+    });
+
+    document.getElementById('downloadAppHtmlBtn').addEventListener('click', () => {
+      saveState();
+      const safeJson = JSON.stringify(state).replace(/</g, '\u003c');
+      const embedTag = `<script id="embeddedStateTag">window.__EMBEDDED_BUDGET_STATE__ = ${safeJson};<\/script>`;
+      let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      html = html.replace(/<script id="embeddedStateTag">[\s\S]*?<\/script>/, '');
+      html = html.replace('</head>', embedTag + '\n</head>');
+      saveFileLocally('PocketBudget.html', html, 'text/html;charset=utf-8;');
+      showToast('Saved PocketBudget.html to device');
+    });
+
+    render();
+    if (state.passcodeEnabled) {
+      showLockScreen();
+    }
+  </script>
+</body>
+</html>
