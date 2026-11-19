@@ -335,12 +335,28 @@
             <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full shrink-0">Private</span>
           </div>
 
-          <label for="receiptImageInput" class="ripple-btn flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-300 hover:border-emerald-400 bg-slate-50/70 rounded-2xl p-4 cursor-pointer transition text-center">
-            <i data-lucide="image-plus" class="w-6 h-6 text-emerald-600"></i>
-            <span class="text-xs font-bold text-slate-800">Upload Screenshot or Take Bill Photo</span>
-            <span class="text-[11px] text-slate-400">Works with UPI screenshots, bank SMS, & receipts</span>
-            <input id="receiptImageInput" type="file" accept="image/*" class="hidden" />
-          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <label for="receiptImageInput" class="ripple-btn flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 hover:border-emerald-400 bg-slate-50/70 rounded-2xl p-3 cursor-pointer transition text-center">
+              <i data-lucide="image-plus" class="w-5 h-5 text-emerald-600"></i>
+              <span class="text-xs font-bold text-slate-800">Scan Photo / SS</span>
+              <span class="text-[10px] text-slate-400">UPI, bills, receipts</span>
+              <input id="receiptImageInput" type="file" accept="image/*" class="hidden" />
+            </label>
+            <button type="button" id="toggleSmsPasteBtn" class="ripple-btn flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 hover:border-emerald-400 bg-slate-50/70 rounded-2xl p-3 cursor-pointer transition text-center">
+              <i data-lucide="message-square-text" class="w-5 h-5 text-sky-600"></i>
+              <span class="text-xs font-bold text-slate-800">Paste Bank SMS</span>
+              <span class="text-[10px] text-slate-400">100% exact & instant</span>
+            </button>
+          </div>
+
+          <!-- Instant Bank / UPI SMS Paste Box -->
+          <div id="smsPasteBox" class="hidden rounded-2xl bg-sky-50/70 border border-sky-200 p-3 space-y-2">
+            <textarea id="smsPasteInput" rows="3" placeholder="Paste any bank debit/credit SMS or UPI text here..." class="w-full rounded-xl border border-sky-200 bg-white p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+            <div class="flex justify-end gap-2">
+              <button type="button" id="closeSmsPasteBtn" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600">Cancel</button>
+              <button type="button" id="parseSmsBtn" class="ripple-btn px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Detect Amount</button>
+            </div>
+          </div>
 
           <!-- Scanning Status & Thumbnail -->
           <div id="scanStatusBox" class="hidden rounded-2xl bg-slate-50 border border-slate-200 p-3 space-y-2">
@@ -1995,18 +2011,15 @@
       showToast('Saved PocketBudget.html to device');
     });
 
-    // Image Preprocessor for High-Accuracy OCR (upscale + grayscale + dark-mode auto-invert + contrast)
+    // Image Preprocessor for High-Accuracy OCR (gentle upscale + smart dark-mode inversion, preserving crisp edges)
     function preprocessImageForOCR(file) {
       return new Promise((resolve) => {
         const img = new Image();
         const objUrl = URL.createObjectURL(file);
         img.onload = () => {
           try {
-            const maxDim = 1800;
-            let scale = 1;
-            if (img.width < 1000) scale = Math.min(2.2, 1400 / Math.max(1, img.width));
-            else if (Math.max(img.width, img.height) > maxDim) scale = maxDim / Math.max(img.width, img.height);
-
+            const targetW = img.width < 1100 ? Math.min(1800, Math.round(img.width * 2)) : Math.min(1800, img.width);
+            const scale = targetW / Math.max(1, img.width);
             const cw = Math.round(img.width * scale);
             const ch = Math.round(img.height * scale);
             const canvas = document.createElement('canvas');
@@ -2019,18 +2032,19 @@
             const imgData = ctx.getImageData(0, 0, cw, ch);
             const d = imgData.data;
 
-            // Sample average brightness to detect dark-mode screenshots
-            let lumSum = 0;
-            const step = Math.max(4, Math.floor((d.length / 4) / 2000) * 4);
-            let samples = 0;
+            // Detect dark-mode screenshot by median/average brightness
+            let darkPixels = 0;
+            let totalSamples = 0;
+            const step = Math.max(4, Math.floor((d.length / 4) / 2500) * 4);
             for (let i = 0; i < d.length; i += step) {
-              lumSum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-              samples++;
+              const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              if (lum < 105) darkPixels++;
+              totalSamples++;
             }
-            const isDarkMode = samples > 0 && (lumSum / samples) < 118;
+            const isDarkMode = totalSamples > 0 && (darkPixels / totalSamples) > 0.55;
 
-            // Convert to high-contrast black-on-white grayscale
-            const contrast = 1.55;
+            // Convert to clean grayscale + gentle contrast stretch (avoids blowing out thin digits)
+            const contrast = 1.28;
             for (let i = 0; i < d.length; i += 4) {
               let lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
               if (isDarkMode) lum = 255 - lum;
@@ -2040,22 +2054,22 @@
             }
             ctx.putImageData(imgData, 0, 0);
             URL.revokeObjectURL(objUrl);
-            canvas.toBlob((blob) => resolve(blob || file), 'image/png');
+            canvas.toBlob((blob) => resolve({ blob: blob || file, height: ch }), 'image/png');
           } catch (err) {
             URL.revokeObjectURL(objUrl);
-            resolve(file);
+            resolve({ blob: file, height: 1000 });
           }
         };
         img.onerror = () => {
           URL.revokeObjectURL(objUrl);
-          resolve(file);
+          resolve({ blob: file, height: 1000 });
         };
         img.src = objUrl;
       });
     }
 
-    // On-device Receipt & Screenshot OCR Parser (Optimized for Indian UPI & Bills)
-    function parseReceiptText(rawText) {
+    // High-Accuracy Receipt, UPI Screenshot & Bank SMS Parser (uses OCR word font-height + keyword scoring)
+    function parseReceiptText(rawText, ocrWords = []) {
       const text = (rawText || '').replace(/\r/g, '\n');
       const lower = text.toLowerCase();
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -2078,75 +2092,98 @@
         category = 'misc';
       }
 
-      // 2. Smart Amount Extraction with noise filtering & confidence scoring
+      // 2. Smart Amount Extraction with Font-Height Scoring (for UPI hero numbers) + Line Context Scoring
       const scored = new Map();
       function addCandidate(val, score) {
         if (isNaN(val) || val <= 0 || val >= 5000000) return;
-        // Ignore obvious years (2020-2030) unless explicitly decimal or currency-prefixed
-        if (val >= 2020 && val <= 2030 && Number.isInteger(val) && score < 80) return;
+        // Skip obvious calendar years (2020-2032) unless explicitly high-confidence currency/hero
+        if (val >= 2020 && val <= 2032 && Number.isInteger(val) && score < 110) return;
         const rounded = Math.round(val * 100) / 100;
         const prev = scored.get(rounded) || 0;
         if (score > prev) scored.set(rounded, score);
       }
 
+      // Pass A: Inspect OCR word bounding boxes (Hero UPI amounts are the tallest numbers on screen!)
+      if (Array.isArray(ocrWords) && ocrWords.length > 0) {
+        const heights = ocrWords
+          .filter(w => w && w.bbox)
+          .map(w => Math.max(1, (w.bbox.y1 || 0) - (w.bbox.y0 || 0)))
+          .sort((a, b) => a - b);
+        const medianH = heights.length ? heights[Math.floor(heights.length * 0.5)] : 22;
+
+        for (const w of ocrWords) {
+          if (!w || !w.text || !w.bbox) continue;
+          const h = (w.bbox.y1 || 0) - (w.bbox.y0 || 0);
+          let tok = w.text.trim()
+            .replace(/(?<=[0-9,.])[Oo](?=[0-9,.])/g, '0')
+            .replace(/(?<=[0-9])[lI](?=[0-9])/g, '1');
+          // Strip currency glyphs or common Tesseract misreads of ₹ (e.g., ?, F, R, €, £, $) at start
+          const m = tok.match(/^(?:₹|rs\.?|inr|[€£$?]|[~=\-])?([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{1,2})?|[0-9]{1,6}(?:\.[0-9]{1,2})?)$/i);
+          if (m) {
+            const val = parseFloat(m[1].replace(/,/g, ''));
+            if (h >= medianH * 1.65) {
+              // Huge hero-font number (e.g. GPay / PhonePe / Paytm main amount!)
+              addCandidate(val, 150 + Math.min(40, Math.round(h / Math.max(1, medianH) * 10)));
+            } else if (/^[₹$€£]|^rs\.?|^inr/i.test(tok)) {
+              addCandidate(val, 105);
+            }
+          }
+        }
+      }
+
+      // Pass B: Line-by-line context scoring (Bills, Receipts & Bank SMS)
       for (const rawLine of lines) {
-        // Fix common OCR digit confusions inside numeric tokens (e.g., 1,O00 -> 1,000)
         let line = rawLine
           .replace(/(?<=[0-9,.])[Oo](?=[0-9,.])/g, '0')
           .replace(/(?<=[0-9])[lI](?=[0-9])/g, '1');
 
-        // Skip lines that are clearly IDs, phone numbers, dates, or bank account masks
         const lineLow = line.toLowerCase();
-        if (/\b(utr|txn|ref\s*no|transaction\s*id|upi\s*id|gstin|phone|mob|a\/c|acct|ifsc|order\s*id|invoice\s*no)\b/.test(lineLow)) {
+        if (/\b(utr|txn|ref\s*no|transaction\s*id|upi\s*id|gstin|phone|mob|ifsc|order\s*id|invoice\s*no|google\s*transaction)\b/.test(lineLow)) {
           continue;
         }
-        // Strip dates, times, and 8+ digit IDs from the line before number matching
+
         const cleanedLine = line
           .replace(/\b\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4}\b/g, ' ')
           .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?\b/gi, ' ')
           .replace(/\b\d{8,}\b/g, ' ')
-          .replace(/[xX*]{2,}\d{2,6}/g, ' ');
+          .replace(/[xX*]{2,}\d{2,6}/g, ' ')
+          .replace(/\ba\/c\s*\w*\d+\b/gi, ' ');
 
-        const isGrandLine = /(grand\s*total|net\s*payable|total\s*payable|amount\s*paid|bill\s*total|you\s*paid|paid\s*successfully|debited\s*by|credited\s*by)/i.test(cleanedLine);
-        const isTotalLine = !isGrandLine && /\b(total|paid|payable|amount|debited|credited|bill)\b/i.test(cleanedLine);
-        const isSubOrTax = /\b(sub\s*total|cgst|sgst|igst|gst|tax|discount|savings|round\s*off|qty|rate)\b/i.test(cleanedLine);
+        const isGrandLine = /(grand\s*total|net\s*payable|total\s*payable|amount\s*paid|bill\s*total|you\s*paid|paid\s*successfully|debited\s*by|credited\s*by|debited\s*with|credited\s*with|sent\s*rs|paid\s*rs)/i.test(cleanedLine);
+        const isTotalLine = !isGrandLine && /\b(total|paid|payable|amount|debited|credited|bill|spent|inr|rs)\b/i.test(cleanedLine);
+        const isSubOrTax = /\b(sub\s*total|cgst|sgst|igst|gst|tax|discount|round\s*off|qty|rate|avl\s*bal|avail\s*bal|balance)\b/i.test(cleanedLine);
 
-        // Pattern A: Explicit currency prefix (₹, Rs., INR, $, €, £)
+        // Explicit currency prefix (₹, Rs., INR, $, €, £)
         const currRe = /(?:₹|rs\.?|inr|\$|€|£)\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/gi;
         let m;
         while ((m = currRe.exec(cleanedLine)) !== null) {
           const v = parseFloat(m[1].replace(/,/g, ''));
-          let pts = 90;
-          if (isGrandLine) pts += 40;
-          else if (isTotalLine) pts += 20;
-          if (isSubOrTax) pts -= 25;
+          let pts = 110;
+          if (isGrandLine) pts += 35;
+          else if (isTotalLine) pts += 15;
+          if (isSubOrTax) pts -= 45;
           addCandidate(v, pts);
         }
 
-        // Pattern B: Numbers on Grand Total / Total / Paid lines (even if ₹ was dropped)
+        // Numbers on Grand Total / Total / Paid lines
         if (isGrandLine || isTotalLine) {
           const numRe = /(?<![0-9.])([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{1,2})?|[0-9]{1,7}(?:\.[0-9]{1,2})?)(?![0-9.])/g;
           while ((m = numRe.exec(cleanedLine)) !== null) {
             const v = parseFloat(m[1].replace(/,/g, ''));
-            let pts = isGrandLine ? 115 : 85;
-            if (isSubOrTax) pts -= 30;
+            let pts = isGrandLine ? 120 : 85;
+            if (isSubOrTax) pts -= 45;
             addCandidate(v, pts);
           }
         }
 
-        // Pattern C: Standalone hero amount line (common on GPay / PhonePe / Paytm screenshots)
-        // Also handles Tesseract misreading ₹ as a single symbol/letter/digit before a space or comma
-        const heroMatch = cleanedLine.match(/^(?:[^0-9a-zA-Z]{1,3}|[Rr][sS]\.?\s*|\?\s*)?([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{1,2})?|[0-9]{1,6}(?:\.[0-9]{1,2})?)$/);
-        if (heroMatch) {
-          const v = parseFloat(heroMatch[1].replace(/,/g, ''));
-          addCandidate(v, 95);
-        }
-
-        // Pattern D: Formatted decimals or comma-grouped numbers anywhere else
-        const decRe = /(?<![0-9.])([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{1,2})?|[0-9]{1,6}\.[0-9]{2})(?![0-9.])/g;
-        while ((m = decRe.exec(cleanedLine)) !== null) {
+        // Fallback: ANY clean standalone number on the line (so amount is never empty!)
+        const anyNumRe = /(?<![0-9.])([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{1,2})?|[0-9]{1,6}(?:\.[0-9]{1,2})?)(?![0-9.])/g;
+        while ((m = anyNumRe.exec(cleanedLine)) !== null) {
           const v = parseFloat(m[1].replace(/,/g, ''));
-          addCandidate(v, isSubOrTax ? 35 : 55);
+          const hasDecOrComma = /[,.]/.test(m[1]);
+          let pts = hasDecOrComma ? 60 : 30;
+          if (isSubOrTax) pts -= 20;
+          addCandidate(v, pts);
         }
       }
 
@@ -2155,7 +2192,7 @@
         .map(x => x[0]);
 
       const amount = ranked.length > 0 ? ranked[0] : '';
-      const otherAmounts = ranked.slice(1, 5);
+      const otherAmounts = ranked.slice(1, 6);
 
       // 3. Auto-detect Date
       let dateStr = state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`;
@@ -2174,16 +2211,61 @@
 
       // 4. Auto-detect Merchant / Payee Note
       let note = '';
-      const paidToMatch = text.match(/(?:paid to|sent to|received from|to|merchant|store)\s*[:\-]?\s*([A-Za-z][A-Za-z0-9 &'.-]{2,35})/i);
+      const paidToMatch = text.match(/(?:paid to|sent to|received from|to|at|merchant|store|vpa)\s*[:\-]?\s*([A-Za-z][A-Za-z0-9 &'.-]{2,35})/i);
       if (paidToMatch) {
         note = paidToMatch[1].trim();
       } else {
-        const cleanLine = lines.find(l => l.length >= 3 && l.length <= 36 && /[A-Za-z]{3,}/.test(l) && !/^(tax invoice|receipt|bill|upi|transaction|completed|successful|paid|total|date|payment)/i.test(l));
+        const cleanLine = lines.find(l => l.length >= 3 && l.length <= 36 && /[A-Za-z]{3,}/.test(l) && !/^(tax invoice|receipt|bill|upi|transaction|completed|successful|paid|total|date|payment|banking)/i.test(l));
         note = cleanLine ? cleanLine.replace(/[^A-Za-z0-9 &'.-]/g, '').trim() : 'Scanned receipt';
       }
 
       return { category, amount, otherAmounts, dateStr, note: note.slice(0, 55) };
     }
+
+    function populateScanResult(parsed, rawText) {
+      const resultForm = document.getElementById('scanResultForm');
+      const chipsWrap = document.getElementById('scanAmountChipsWrap');
+      const chipsEl = document.getElementById('scanAmountChips');
+
+      document.getElementById('scanCategory').value = parsed.category;
+      document.getElementById('scanAmount').value = parsed.amount || '';
+      document.getElementById('scanDate').value = parsed.dateStr;
+      document.getElementById('scanNote').value = parsed.note;
+      document.getElementById('scanRawText').textContent = (rawText || '').trim() || '(No readable text detected — you can type the amount above)';
+
+      if (parsed.otherAmounts && parsed.otherAmounts.length > 0) {
+        chipsEl.innerHTML = parsed.otherAmounts.map(val =>
+          `<button type="button" data-pick-scan-amt="${val}" class="ripple-btn px-2 py-1 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100">${formatMoney(val)}</button>`
+        ).join('');
+        chipsWrap.classList.remove('hidden');
+      } else {
+        chipsWrap.classList.add('hidden');
+      }
+
+      resultForm.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Instant SMS Paste handlers
+    document.getElementById('toggleSmsPasteBtn').addEventListener('click', () => {
+      document.getElementById('smsPasteBox').classList.toggle('hidden');
+      document.getElementById('smsPasteInput').focus();
+    });
+    document.getElementById('closeSmsPasteBtn').addEventListener('click', () => {
+      document.getElementById('smsPasteBox').classList.add('hidden');
+    });
+    document.getElementById('parseSmsBtn').addEventListener('click', () => {
+      const txt = document.getElementById('smsPasteInput').value.trim();
+      if (!txt) {
+        showToast('Paste an SMS or UPI text first');
+        return;
+      }
+      const parsed = parseReceiptText(txt, []);
+      document.getElementById('smsPasteBox').classList.add('hidden');
+      document.getElementById('scanStatusBox').classList.add('hidden');
+      populateScanResult(parsed, txt);
+      showToast(parsed.amount ? `Detected ${formatMoney(parsed.amount)}` : 'Review details below');
+    });
 
     document.getElementById('receiptImageInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -2194,74 +2276,76 @@
       const progressBar = document.getElementById('scanProgressBar');
       const previewImg = document.getElementById('scanPreviewImg');
       const resultForm = document.getElementById('scanResultForm');
-      const chipsWrap = document.getElementById('scanAmountChipsWrap');
-      const chipsEl = document.getElementById('scanAmountChips');
 
       const imgUrl = URL.createObjectURL(file);
       previewImg.src = imgUrl;
+      document.getElementById('smsPasteBox').classList.add('hidden');
       statusBox.classList.remove('hidden');
       resultForm.classList.add('hidden');
-      chipsWrap.classList.add('hidden');
-      statusText.textContent = 'Enhancing image for sharp number reading...';
+      statusText.textContent = 'Enhancing screenshot for OCR...';
       progressBar.style.width = '12%';
 
       if (typeof Tesseract === 'undefined') {
         statusText.textContent = 'Offline mode: enter details below';
         progressBar.style.width = '100%';
-        document.getElementById('scanCategory').value = 'expenses';
-        document.getElementById('scanAmount').value = '';
-        document.getElementById('scanDate').value = state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`;
-        document.getElementById('scanNote').value = '';
-        document.getElementById('scanRawText').textContent = 'Connect to the internet once to load the OCR scanner, or fill the fields above.';
-        resultForm.classList.remove('hidden');
+        populateScanResult({
+          category: 'expenses',
+          amount: '',
+          otherAmounts: [],
+          dateStr: state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`,
+          note: ''
+        }, 'Connect to the internet once to load the OCR scanner, or use Paste Bank SMS.');
         e.target.value = '';
         return;
       }
 
       try {
-        const enhancedBlob = await preprocessImageForOCR(file);
-        progressBar.style.width = '22%';
-        statusText.textContent = 'Reading text...';
+        const { blob: enhancedBlob } = await preprocessImageForOCR(file);
+        progressBar.style.width = '20%';
+        statusText.textContent = 'Scanning numbers (sparse-text mode)...';
 
-        const workerResult = await Tesseract.recognize(enhancedBlob, 'eng', {
-          logger: (m) => {
-            if (m.status === 'recognizing text' && typeof m.progress === 'number') {
-              const pct = Math.max(25, Math.round(25 + m.progress * 75));
-              progressBar.style.width = `${pct}%`;
-              statusText.textContent = `Reading numbers... ${pct}%`;
+        let rawText = '';
+        let ocrWords = [];
+
+        // Use Tesseract Worker with PSM 11 (Sparse Text — far better for UPI screenshots & bills)
+        if (typeof Tesseract.createWorker === 'function') {
+          const worker = await Tesseract.createWorker('eng', 1, {
+            logger: (m) => {
+              if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+                const pct = Math.max(25, Math.round(25 + m.progress * 75));
+                progressBar.style.width = `${pct}%`;
+                statusText.textContent = `Reading numbers... ${pct}%`;
+              }
             }
-          }
-        });
-
-        const rawText = (workerResult && workerResult.data && workerResult.data.text) || '';
-        const parsed = parseReceiptText(rawText);
-
-        document.getElementById('scanCategory').value = parsed.category;
-        document.getElementById('scanAmount').value = parsed.amount || '';
-        document.getElementById('scanDate').value = parsed.dateStr;
-        document.getElementById('scanNote').value = parsed.note;
-        document.getElementById('scanRawText').textContent = rawText.trim() || '(No readable text detected — you can type the amount above)';
-
-        if (parsed.otherAmounts && parsed.otherAmounts.length > 0) {
-          chipsEl.innerHTML = parsed.otherAmounts.map(val =>
-            `<button type="button" data-pick-scan-amt="${val}" class="ripple-btn px-2 py-1 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100">${formatMoney(val)}</button>`
-          ).join('');
-          chipsWrap.classList.remove('hidden');
+          });
+          await worker.setParameters({ tessedit_pageseg_mode: '11' });
+          const res = await worker.recognize(enhancedBlob);
+          rawText = (res && res.data && res.data.text) || '';
+          ocrWords = (res && res.data && res.data.words) || [];
+          await worker.terminate();
         } else {
-          chipsWrap.classList.add('hidden');
+          const res = await Tesseract.recognize(enhancedBlob, 'eng');
+          rawText = (res && res.data && res.data.text) || '';
+          ocrWords = (res && res.data && res.data.words) || [];
         }
+
+        const parsed = parseReceiptText(rawText, ocrWords);
+        populateScanResult(parsed, rawText);
 
         progressBar.style.width = '100%';
         statusText.textContent = parsed.amount
           ? `Found ${formatMoney(parsed.amount)} → ${(CATEGORY_META[parsed.category] || CATEGORY_META.expenses).label}`
-          : 'Scan complete — verify amount below';
-        resultForm.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
+          : 'Scan complete — pick or type amount below';
       } catch (err) {
         statusText.textContent = 'Could not read image — enter details below';
         progressBar.style.width = '100%';
-        document.getElementById('scanDate').value = state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`;
-        resultForm.classList.remove('hidden');
+        populateScanResult({
+          category: 'expenses',
+          amount: '',
+          otherAmounts: [],
+          dateStr: state.selectedMonth === TODAY_YM ? '2026-11-19' : `${state.selectedMonth}-01`,
+          note: ''
+        }, '');
       }
       e.target.value = '';
     });
