@@ -191,6 +191,7 @@
             <div id="barMisc" class="h-full bg-violet-500 transition-all duration-300" style="width: 0%"></div>
             <div id="barGifts" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%"></div>
             <div id="barSavings" class="h-full bg-sky-500 transition-all duration-300" style="width: 0%"></div>
+            <div id="barInvestments" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
           </div>
           <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 gap-2">
             <div class="flex items-center gap-2 flex-wrap">
@@ -199,6 +200,7 @@
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-violet-500"></span>Misc</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Gifts</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500"></span>Saved</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span>Invest</span>
             </div>
             <span id="salaryLeftLabel" class="font-semibold text-slate-700 shrink-0"></span>
           </div>
@@ -289,21 +291,30 @@
               <div id="catCount-gifts" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
             </button>
 
-            <!-- Savings (Full-width Highlight Card) -->
-            <button data-quick-cat="savings" class="ripple-btn col-span-2 text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-sky-300 transition flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
-                  <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+            <!-- Savings -->
+            <button data-quick-cat="savings" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-sky-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                  <i data-lucide="piggy-bank" class="w-4 h-4"></i>
                 </div>
-                <div>
-                  <div class="text-xs font-semibold text-slate-500">Savings (KSFE & Goals)</div>
-                  <div id="catTotal-savings" class="text-lg font-extrabold text-slate-900">₹0</div>
+                <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">Saved</span>
+              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Savings</div>
+              <div id="catTotal-savings" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-savings" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
+            </button>
+
+            <!-- Investments (SIP & Stocks) -->
+            <button data-quick-cat="investments" class="ripple-btn text-left bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:border-blue-300 transition">
+              <div class="flex items-center justify-between">
+                <div class="w-9 h-9 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <i data-lucide="line-chart" class="w-4 h-4"></i>
                 </div>
+                <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Invested</span>
               </div>
-              <div class="text-right">
-                <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">Saved</span>
-                <div id="catCount-savings" class="text-[11px] text-slate-400 mt-1">0 entries</div>
-              </div>
+              <div class="mt-3 text-xs font-semibold text-slate-500">Investments</div>
+              <div id="catTotal-investments" class="text-lg font-extrabold text-slate-900 mt-0.5">₹0</div>
+              <div id="catCount-investments" class="text-[11px] text-slate-400 mt-0.5">0 entries</div>
             </button>
           </div>
         </div>
@@ -344,20 +355,27 @@
           <button data-filter="misc" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Misc</button>
           <button data-filter="gifts" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Gifts</button>
           <button data-filter="savings" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Savings</button>
+          <button data-filter="investments" class="filter-chip ripple-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0">Investments</button>
         </div>
         <div id="fullEntriesList" class="space-y-2"></div>
       </section>
 
       <!-- TAB 3: ALL MONTHS & GRAND TOTAL LEDGER -->
       <section id="tab-months" class="hidden space-y-3">
-        <div class="bg-emerald-50 border border-emerald-200 rounded-3xl p-4 flex items-center justify-between">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-3xl p-4 space-y-2.5">
           <div>
             <div class="text-xs font-semibold text-emerald-800">Running Grand Total (Latest Month)</div>
             <div id="overallGrandTotalValue" class="text-2xl font-extrabold text-emerald-950 mt-0.5">₹0</div>
           </div>
-          <div class="text-right">
-            <div class="text-xs font-semibold text-emerald-800">Cumulative Savings</div>
-            <div id="overallSavingsValue" class="text-lg font-bold text-sky-800 mt-0.5">₹0</div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200/70">
+            <div>
+              <div class="text-[11px] font-semibold text-emerald-800">Cumulative Savings</div>
+              <div id="overallSavingsValue" class="text-base font-extrabold text-sky-800 mt-0.5">₹0</div>
+            </div>
+            <div>
+              <div class="text-[11px] font-semibold text-emerald-800">Cumulative Invested</div>
+              <div id="overallInvestmentsValue" class="text-base font-extrabold text-blue-800 mt-0.5">₹0</div>
+            </div>
           </div>
         </div>
 
@@ -520,14 +538,15 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1.5">Category</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button type="button" data-cat-pick="salary" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800">Salary</button>
-            <button type="button" data-cat-pick="credited" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Credited</button>
-            <button type="button" data-cat-pick="expenses" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Expenses</button>
-            <button type="button" data-cat-pick="creditcard" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Credit Card</button>
-            <button type="button" data-cat-pick="misc" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Misc</button>
-            <button type="button" data-cat-pick="gifts" class="cat-pick-btn py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Gifts</button>
-            <button type="button" data-cat-pick="savings" class="cat-pick-btn col-span-3 py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600">Savings</button>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" data-cat-pick="salary" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800">Salary</button>
+            <button type="button" data-cat-pick="credited" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Credited</button>
+            <button type="button" data-cat-pick="expenses" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Expenses</button>
+            <button type="button" data-cat-pick="creditcard" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Card</button>
+            <button type="button" data-cat-pick="misc" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Misc</button>
+            <button type="button" data-cat-pick="gifts" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Gifts</button>
+            <button type="button" data-cat-pick="savings" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Savings</button>
+            <button type="button" data-cat-pick="investments" class="cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600">Invest</button>
           </div>
         </div>
 
@@ -553,7 +572,7 @@
 
         <div>
           <label for="entryNote" class="block text-xs font-semibold text-slate-600 mb-1">Note (optional)</label>
-          <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Monthly salary, Rent, Birthday gift, FD" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <input id="entryNote" type="text" maxlength="60" placeholder="e.g., Salary, Rent, SIP, Nifty 50, KSFE" class="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
 
         <div class="pt-1 flex gap-2">
@@ -632,7 +651,7 @@
 
         <label class="ripple-btn w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-800 cursor-pointer">
           <span class="flex items-center gap-2.5"><i data-lucide="upload" class="w-4 h-4 text-amber-600"></i>Restore from Backup (JSON)</span>
-          <input id="restoreJsonInput" type="file" accept=".json,application/json" class="hidden" />
+          <input id="restoreJsonInput" type="file" accept="*/*" class="hidden" />
           <span class="text-xs text-slate-500">Choose file</span>
         </label>
 
@@ -707,7 +726,8 @@
       creditcard: { label: 'Credit Card', sign: -1, badge: 'bg-indigo-100 text-indigo-700', icon: 'credit-card', amountClass: 'text-indigo-700' },
       misc: { label: 'Miscellaneous', sign: -1, badge: 'bg-violet-100 text-violet-700', icon: 'receipt', amountClass: 'text-violet-700' },
       gifts: { label: 'Gifts', sign: -1, badge: 'bg-amber-100 text-amber-700', icon: 'gift', amountClass: 'text-amber-700' },
-      savings: { label: 'Savings', sign: -1, badge: 'bg-sky-100 text-sky-700', icon: 'piggy-bank', amountClass: 'text-sky-700' }
+      savings: { label: 'Savings', sign: -1, badge: 'bg-sky-100 text-sky-700', icon: 'piggy-bank', amountClass: 'text-sky-700' },
+      investments: { label: 'Investments', sign: -1, badge: 'bg-blue-100 text-blue-700', icon: 'line-chart', amountClass: 'text-blue-700' }
     };
 
     const WISE_QUOTES = [
@@ -721,7 +741,8 @@
     const DEFAULT_CHECKLIST_ITEMS = [
       { id: 'chk_mom_gift', title: "Mom's Gift", category: 'gifts', defaultAmount: 0, matchKey: 'mom', core: true },
       { id: 'chk_ksfe', title: 'KSFE Savings', category: 'savings', defaultAmount: 0, matchKey: 'ksfe', core: true },
-      { id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true }
+      { id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true },
+      { id: 'chk_investments', title: 'SIP / Investments', category: 'investments', defaultAmount: 0, matchKey: 'sip', core: true }
     ];
 
     const DEFAULT_STATE = {
@@ -760,6 +781,9 @@
             : JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
           if (!base.some(it => it.id === 'chk_credit_card')) {
             base.push({ id: 'chk_credit_card', title: 'Credit Card Bill', category: 'creditcard', defaultAmount: 0, matchKey: 'credit card', core: true });
+          }
+          if (!base.some(it => it.id === 'chk_investments')) {
+            base.push({ id: 'chk_investments', title: 'SIP / Investments', category: 'investments', defaultAmount: 0, matchKey: 'sip', core: true });
           }
           return base;
         })(),
@@ -856,12 +880,13 @@
       const months = Array.from(monthSet).sort();
       let runningBalance = 0;
       let cumulativeSavings = 0;
+      let cumulativeInvestments = 0;
       const ledger = {};
 
       for (const ym of months) {
         const items = state.entries.filter(e => e.month === ym);
-        const sums = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0 };
-        const counts = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0 };
+        const sums = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0, investments: 0 };
+        const counts = { salary: 0, credited: 0, expenses: 0, creditcard: 0, misc: 0, gifts: 0, savings: 0, investments: 0 };
 
         for (const item of items) {
           if (sums[item.category] !== undefined) {
@@ -871,12 +896,13 @@
         }
 
         const totalInflow = sums.salary + sums.credited;
-        const monthNet = totalInflow - sums.expenses - sums.creditcard - sums.misc - sums.gifts - sums.savings;
+        const monthNet = totalInflow - sums.expenses - sums.creditcard - sums.misc - sums.gifts - sums.savings - sums.investments;
         const opening = state.autoCarryover ? runningBalance : 0;
         const grandTotal = opening + monthNet;
 
         runningBalance = grandTotal;
         cumulativeSavings += sums.savings;
+        cumulativeInvestments += sums.investments;
 
         ledger[ym] = {
           ym,
@@ -887,11 +913,12 @@
           opening,
           grandTotal,
           cumulativeSavings,
+          cumulativeInvestments,
           items: items.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt)
         };
       }
 
-      return { months, ledger, cumulativeSavings };
+      return { months, ledger, cumulativeSavings, cumulativeInvestments };
     }
 
     function showToast(msg) {
@@ -947,6 +974,7 @@
         currentData.sums.misc,
         currentData.sums.gifts,
         currentData.sums.savings,
+        currentData.sums.investments,
         remaining
       ];
       const total = dataValues.reduce((a, b) => a + b, 0);
@@ -963,11 +991,11 @@
       monthChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Expenses', 'Credit Card', 'Misc', 'Gifts', 'Savings', 'Remaining'],
+          labels: ['Expenses', 'Credit Card', 'Misc', 'Gifts', 'Savings', 'Investments', 'Remaining'],
           datasets: [{
             data: total > 0 ? dataValues : [1],
             backgroundColor: total > 0
-              ? ['#f43f5e', '#6366f1', '#8b5cf6', '#f59e0b', '#0ea5e9', '#10b981']
+              ? ['#f43f5e', '#6366f1', '#8b5cf6', '#f59e0b', '#0ea5e9', '#2563eb', '#10b981']
               : ['#e2e8f0'],
             borderWidth: 0,
             hoverOffset: 4
@@ -1069,7 +1097,7 @@
       document.getElementById('currentMonthLabel').textContent = formatMonthLabel(state.selectedMonth);
       document.getElementById('sampleBanner').classList.toggle('hidden', !state.isSample);
 
-      const { months, ledger, cumulativeSavings } = computeAllMonthsLedger();
+      const { months, ledger, cumulativeSavings, cumulativeInvestments } = computeAllMonthsLedger();
       const current = ledger[state.selectedMonth];
 
       // Hero Card
@@ -1101,19 +1129,21 @@
 
       // Income Allocation Progress Bar
       const inflow = current.totalInflow;
-      const totalAllocated = current.sums.expenses + current.sums.creditcard + current.sums.misc + current.sums.gifts + current.sums.savings;
+      const totalAllocated = current.sums.expenses + current.sums.creditcard + current.sums.misc + current.sums.gifts + current.sums.savings + current.sums.investments;
       if (inflow > 0) {
         const pctExp = Math.min(100, (current.sums.expenses / inflow) * 100);
         const pctCard = Math.min(100 - pctExp, (current.sums.creditcard / inflow) * 100);
         const pctMisc = Math.min(100 - pctExp - pctCard, (current.sums.misc / inflow) * 100);
         const pctGifts = Math.min(100 - pctExp - pctCard - pctMisc, (current.sums.gifts / inflow) * 100);
         const pctSav = Math.min(100 - pctExp - pctCard - pctMisc - pctGifts, (current.sums.savings / inflow) * 100);
+        const pctInv = Math.min(100 - pctExp - pctCard - pctMisc - pctGifts - pctSav, (current.sums.investments / inflow) * 100);
         const totalPct = Math.round((totalAllocated / inflow) * 100);
         document.getElementById('barExpenses').style.width = `${pctExp}%`;
         document.getElementById('barCreditCard').style.width = `${pctCard}%`;
         document.getElementById('barMisc').style.width = `${pctMisc}%`;
         document.getElementById('barGifts').style.width = `${pctGifts}%`;
         document.getElementById('barSavings').style.width = `${pctSav}%`;
+        document.getElementById('barInvestments').style.width = `${pctInv}%`;
         document.getElementById('salaryUsageLabel').textContent = `${totalPct}% allocated`;
         document.getElementById('salaryLeftLabel').textContent = current.monthNet >= 0
           ? `${formatMoney(current.monthNet)} left`
@@ -1124,12 +1154,13 @@
         document.getElementById('barMisc').style.width = '0%';
         document.getElementById('barGifts').style.width = '0%';
         document.getElementById('barSavings').style.width = '0%';
+        document.getElementById('barInvestments').style.width = '0%';
         document.getElementById('salaryUsageLabel').textContent = 'No income yet';
         document.getElementById('salaryLeftLabel').textContent = totalAllocated > 0 ? `${formatMoney(totalAllocated)} spent` : '';
       }
 
       // Category Cards
-      for (const cat of ['salary', 'credited', 'expenses', 'creditcard', 'misc', 'gifts', 'savings']) {
+      for (const cat of ['salary', 'credited', 'expenses', 'creditcard', 'misc', 'gifts', 'savings', 'investments']) {
         document.getElementById(`catTotal-${cat}`).textContent = formatMoney(current.sums[cat]);
         const cnt = current.counts[cat];
         document.getElementById(`catCount-${cat}`).textContent = `${cnt} ${cnt === 1 ? 'entry' : 'entries'}`;
@@ -1161,6 +1192,7 @@
       const latestYm = months[months.length - 1];
       document.getElementById('overallGrandTotalValue').textContent = formatMoney(ledger[latestYm].grandTotal);
       document.getElementById('overallSavingsValue').textContent = formatMoney(cumulativeSavings);
+      document.getElementById('overallInvestmentsValue').textContent = formatMoney(cumulativeInvestments);
 
       const ledgerEl = document.getElementById('monthsLedgerList');
       ledgerEl.innerHTML = months.slice().reverse().map(ym => {
@@ -1185,7 +1217,10 @@
               <div><span class="text-slate-400 block">Credit Card</span><span class="font-bold text-indigo-700">${formatMoney(m.sums.creditcard)}</span></div>
               <div><span class="text-slate-400 block">Misc</span><span class="font-bold text-violet-700">${formatMoney(m.sums.misc)}</span></div>
               <div><span class="text-slate-400 block">Gifts</span><span class="font-bold text-amber-700">${formatMoney(m.sums.gifts)}</span></div>
-              <div class="col-span-3 pt-1.5 border-t border-slate-200/70 flex items-center justify-between"><span class="text-slate-500 font-medium">Savings</span><span class="font-bold text-sky-700">${formatMoney(m.sums.savings)}</span></div>
+              <div class="col-span-3 pt-1.5 border-t border-slate-200/70 grid grid-cols-2 gap-2">
+                <div class="flex items-center justify-between"><span class="text-slate-500 font-medium">Savings</span><span class="font-bold text-sky-700">${formatMoney(m.sums.savings)}</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-500 font-medium">Investments</span><span class="font-bold text-blue-700">${formatMoney(m.sums.investments)}</span></div>
+              </div>
             </div>
             <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
               <span>Prev. Carried In: <strong>${formatMoney(m.opening)}</strong></span>
@@ -1266,7 +1301,7 @@
 
       const salary = current.totalInflow;
       const spent = current.sums.expenses + current.sums.creditcard + current.sums.misc + current.sums.gifts;
-      const savings = current.sums.savings;
+      const savings = current.sums.savings + current.sums.investments;
       const savingsRate = salary > 0 ? Math.round((savings / salary) * 100) : 0;
       const spendRate = salary > 0 ? Math.round((spent / salary) * 100) : 0;
 
@@ -1385,10 +1420,9 @@
       modalCategory = cat;
       document.querySelectorAll('.cat-pick-btn').forEach(btn => {
         const active = btn.dataset.catPick === cat;
-        const span = btn.dataset.catPick === 'savings' ? ' col-span-3' : '';
         btn.className = active
-          ? `cat-pick-btn${span} py-2 px-1 rounded-2xl text-xs font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800`
-          : `cat-pick-btn${span} py-2 px-1 rounded-2xl text-xs font-semibold border border-slate-200 bg-white text-slate-600`;
+          ? 'cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-800'
+          : 'cat-pick-btn py-2 px-1 rounded-2xl text-[11px] font-semibold border border-slate-200 bg-white text-slate-600';
       });
     }
 
